@@ -8772,20 +8772,6 @@ extern (C++) final class DotIdExp : UnaExp
                     if (v.type.ty == Terror)
                         return new ErrorExp();
 
-                    if ((v.storage_class & STCmanifest) && v._init)
-                    {
-                        if (v.inuse)
-                        {
-                            .error(loc, "circular initialization of %s '%s'", v.kind(), v.toPrettyChars());
-                            return new ErrorExp();
-                        }
-                        e = v.expandInitializer(loc);
-                        v.inuse++;
-                        e = e.semantic(sc);
-                        v.inuse--;
-                        return e;
-                    }
-
                     if (v.needThis())
                     {
                         if (!eleft)
@@ -8803,6 +8789,21 @@ extern (C++) final class DotIdExp : UnaExp
                         }
                     }
                     e = e.deref();
+
+                    if ((v.storage_class & STCmanifest) && v._init)
+                    {
+                        if (v.inuse)
+                        {
+                            .error(loc, "circular initialization of %s '%s'", v.kind(), v.toPrettyChars());
+                            return new ErrorExp();
+                        }
+                        auto ne = v.expandInitializer(loc);
+                        v.inuse++;
+                        ne = ne.semantic(sc);
+                        v.inuse--;
+                        return e;
+                    }
+
                     return e.semantic(sc);
                 }
 
