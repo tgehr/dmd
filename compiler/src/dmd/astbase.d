@@ -675,6 +675,25 @@ struct ASTBase
         }
     }
 
+    extern (C++) final class UnpackDeclaration : Declaration
+    {
+        Dsymbols* vars;
+        Initializer _init;
+        extern (D) this(const ref Loc loc, Dsymbols* vars, Initializer _init, StorageClass storage_class)
+        {
+            super(null);
+            this.loc = loc;
+            this.vars = vars;
+            this._init = _init;
+            this.storage_class = storage_class;
+        }
+
+        override void accept(Visitor v)
+        {
+            v.visit(this);
+        }
+    }
+
     extern (C++) final class FuncLiteralDeclaration : FuncDeclaration
     {
         TOK tok;
