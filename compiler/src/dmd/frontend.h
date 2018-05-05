@@ -68,6 +68,7 @@ class ThisDeclaration;
 class BitFieldDeclaration;
 class TypeInfoDeclaration;
 class TupleDeclaration;
+class UnpackDeclaration;
 class AliasDeclaration;
 class FuncDeclaration;
 class FuncAliasDeclaration;
@@ -644,6 +645,7 @@ public:
     BitFieldDeclaration* isBitFieldDeclaration();
     TypeInfoDeclaration* isTypeInfoDeclaration();
     TupleDeclaration* isTupleDeclaration();
+    UnpackDeclaration* isUnpackDeclaration();
     AliasDeclaration* isAliasDeclaration();
     AggregateDeclaration* isAggregateDeclaration();
     FuncDeclaration* isFuncDeclaration();
