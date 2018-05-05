@@ -68,6 +68,7 @@ class ThisDeclaration;
 class BitFieldDeclaration;
 class TypeInfoDeclaration;
 class TupleDeclaration;
+class UnpackDeclaration;
 class AliasDeclaration;
 class FuncDeclaration;
 class FuncAliasDeclaration;
@@ -542,6 +543,7 @@ public:
     virtual BitFieldDeclaration* isBitFieldDeclaration();
     virtual TypeInfoDeclaration* isTypeInfoDeclaration();
     virtual TupleDeclaration* isTupleDeclaration();
+    virtual UnpackDeclaration* isUnpackDeclaration();
     virtual AliasDeclaration* isAliasDeclaration();
     virtual AggregateDeclaration* isAggregateDeclaration();
     virtual FuncDeclaration* isFuncDeclaration();

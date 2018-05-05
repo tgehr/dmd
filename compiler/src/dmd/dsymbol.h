@@ -25,6 +25,7 @@ class ThisDeclaration;
 class BitFieldDeclaration;
 class TypeInfoDeclaration;
 class TupleDeclaration;
+class UnpackDeclaration;
 class AliasDeclaration;
 class AggregateDeclaration;
 class EnumDeclaration;
@@ -268,6 +269,7 @@ public:
     virtual BitFieldDeclaration *isBitFieldDeclaration() { return nullptr; }
     virtual TypeInfoDeclaration *isTypeInfoDeclaration() { return nullptr; }
     virtual TupleDeclaration *isTupleDeclaration() { return nullptr; }
+    virtual UnpackDeclaration *isUnpackDeclaration() { return nullptr; }
     virtual AliasDeclaration *isAliasDeclaration() { return nullptr; }
     virtual AggregateDeclaration *isAggregateDeclaration() { return nullptr; }
     virtual FuncDeclaration *isFuncDeclaration() { return nullptr; }
