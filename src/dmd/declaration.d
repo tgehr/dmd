@@ -676,6 +676,36 @@ extern (C++) final class TupleDeclaration : Declaration
     }
 }
 
+extern (C++) class UnpackDeclaration : Declaration
+{
+    Dsymbols* vars;
+    Initializer _init;
+    final extern (D) this(Loc loc, Dsymbols* vars, Initializer _init, StorageClass storage_class)
+    {
+        super(null);
+        this.loc = loc;
+        this.vars = vars;
+        this._init = _init;
+        this.storage_class = storage_class;
+    }
+
+    override Dsymbol syntaxCopy(Dsymbol s)
+    {
+        return new UnpackDeclaration(loc, Dsymbol.arraySyntaxCopy(vars), _init.syntaxCopy(), storage_class);
+    }
+
+
+    final override inout(UnpackDeclaration) isUnpackDeclaration() inout
+    {
+        return this;
+    }
+
+    override void accept(Visitor v)
+    {
+        v.visit(this);
+    }
+}
+
 /***********************************************************
  */
 extern (C++) final class AliasDeclaration : Declaration
@@ -1102,7 +1132,6 @@ extern (C++) class VarDeclaration : Declaration
             }
         }
 
-        assert(type || _init);
         this.type = type;
         this._init = _init;
         this.loc = loc;

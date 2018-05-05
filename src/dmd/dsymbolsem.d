@@ -571,6 +571,8 @@ private extern(C++) final class DsymbolSemanticVisitor : Visitor
         //    return;
         //semanticRun = PSSsemantic;
 
+        assert(dsym.type || dsym._init);
+
         if (dsym.semanticRun >= PASS.semanticdone)
             return;
 

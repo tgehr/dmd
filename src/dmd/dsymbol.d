@@ -1057,6 +1057,11 @@ extern (C++) class Dsymbol : RootObject
         return null;
     }
 
+    inout(UnpackDeclaration) isUnpackDeclaration() inout
+    {
+        return null;
+    }
+
     inout(AliasDeclaration) isAliasDeclaration() inout
     {
         return null;
