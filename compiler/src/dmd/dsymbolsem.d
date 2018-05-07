@@ -1844,6 +1844,11 @@ private extern(C++) final class DsymbolSemanticVisitor : Visitor
         attribSemantic(sfd);
     }
 
+    override void visit(UnpackDeclaration upd)
+    {
+        attribSemantic(upd);
+    }
+
     private Dsymbols* compileIt(MixinDeclaration cd)
     {
         //printf("MixinDeclaration::compileIt(loc = %d) %s\n", cd.loc.linnum, cd.exp.toChars());
@@ -4551,6 +4556,12 @@ private extern(C++) class AddMemberVisitor : Visitor
         attribAddMember(visd, sc, sds);
     }
 
+    override void visit(UnpackDeclaration upd)
+    {
+        // used only for caching the enclosing symbol
+        upd.scopesym = sds;
+    }
+
     override void visit(StaticIfDeclaration sid)
     {
         //printf("StaticIfDeclaration::addMember() '%s'\n", sid.toChars());
@@ -7015,6 +7026,11 @@ private extern(C++) class SetScopeVisitor : Visitor
             visit(cast(Dsymbol)uad);
         visit(cast(AttribDeclaration)uad);
     }
+
+    override void visit(UnpackDeclaration upd)
+    {
+        visit(cast(Dsymbol)upd);
+    }
 }
 
 void importAll(Dsymbol d, Scope* sc)
@@ -7153,6 +7169,9 @@ extern(C++) class ImportAllVisitor : Visitor
                 sc2.pop();
         }
     }
+
+    // do not evaluate variable declarations before semantic pass
+    override void visit(UnpackDeclaration _) {}
 
     // do not evaluate condition before semantic pass
     override void visit(StaticIfDeclaration _) {}
@@ -7898,6 +7917,30 @@ extern(C++) class ConditionIncludeVisitor : Visitor
         sfd.cached = true;
         sfd.cache = d;
         symbols = d;
+    }
+
+    override void visit(UnpackDeclaration upd)
+    {
+        if (upd.errors)
+        {
+            symbols = null;
+            return;
+        }
+        if (upd.onStack)
+        {
+            symbols = null;
+            return;
+        }
+        upd.onStack = true;
+        scope(exit) upd.onStack = false;
+        upd.lower(upd._scope ? upd._scope : sc);
+        if (!upd.lowered)
+        {
+            symbols = null;
+            return;
+        }
+        // TODO: call include recursively?
+        symbols = upd.decl;
     }
 }
 
