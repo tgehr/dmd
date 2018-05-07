@@ -599,6 +599,11 @@ extern (C++) Statement toStatement(Dsymbol s)
             result = new StaticForeachStatement(d.loc, d.sfe);
         }
 
+        override void visit(UnpackDeclaration d)
+        {
+            result = declStmt(d);
+        }
+
         override void visit(CompileDeclaration d)
         {
             result = visitMembers(d.loc, d.include(null));

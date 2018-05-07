@@ -31,6 +31,7 @@ import dmd.root.outbuffer;
 import dmd.target;
 import dmd.tokens;
 import dmd.visitor;
+import dmd.init; // TODO: maybe remove this?
 
 /***********************************************************
  */
@@ -459,10 +460,10 @@ extern (C++) final class LinkDeclaration : AttribDeclaration
             sc.aligndecl, sc.inlining);
     }
 
-    override const(char)* toChars() const
+/+    override const(char)* toChars() const
     {
         return "extern ()";
-    }
+    }+/
 
     override void accept(Visitor v)
     {
@@ -1330,6 +1331,224 @@ extern (C++) final class UserAttributeDeclaration : AttribDeclaration
     override const(char)* kind() const
     {
         return "UserAttribute";
+    }
+
+    override void accept(Visitor v)
+    {
+        v.visit(this);
+    }
+}
+
+/***********************************************************
+ * Unpack declarations look like, e.g.:
+ * auto (a, b) = init;
+ * (int a, string b) = init;
+ */
+extern (C++) class UnpackDeclaration : AttribDeclaration
+{
+    Expression _init;
+    ScopeDsymbol scopesym;
+    StorageClass storage_class;
+
+    final extern (D) this(Loc loc, Dsymbols* vars, Expression _init, StorageClass storage_class)
+    {
+        super(vars);
+        this.loc = loc;
+        this.decl = vars;
+        this._init = _init;
+        this.storage_class = storage_class;
+    }
+    bool onStack = false;
+    bool lowered = false;
+
+    private void lower(Scope* sc)
+    {
+        if (lowered)
+            return;
+        if (!sc)
+            return;
+
+        void fail()
+        {
+            decl = null;
+            lowered = true;
+        }
+
+        import dmd.expressionsem;
+        _init = _init.expressionSemantic(sc);
+
+        if (_init.type.ty == Terror)
+        {
+            return fail();
+        }
+
+        TypeTuple typ = null;
+        TupleExp tup = null;
+
+        if (_init.type.ty == Ttuple && _init.op == TOK.tuple)
+        {
+            tup = cast(TupleExp)_init;
+        }
+        else
+        {
+            import dmd.aliasthis;
+            _init = resolveAliasThis(sc, _init);
+            if (_init.type.ty == Ttuple && _init.op == TOK.tuple)
+            {
+                tup = cast(TupleExp)_init;
+            }
+        }
+
+        import dmd.errors;
+        if (!tup)
+        {
+            dmd.errors.error(loc, "right hand side of unpack declaration must be a tuple or expression sequence");
+            return fail();
+        }
+        if (decl.dim != tup.exps.dim)
+        {
+            dmd.errors.error(loc, "incompatible number of components for unpack declaration (`%d` vs. `%d`)", decl.dim, tup.exps.dim);
+            return fail();
+        }
+
+        foreach (d; *decl)
+        {
+            ulong d_storage_class;
+            if (auto vd = d.isVarDeclaration())
+            {
+                d_storage_class = vd.storage_class;
+            }
+            else if (auto up = d.isUnpackDeclaration())
+            {
+                d_storage_class = up.storage_class;
+            }
+            else
+            {
+                assert(0);
+            }
+            if (d_storage_class & STC.static_ && !(storage_class & STC.static_))
+            {
+                dmd.errors.error(loc, "cannot specify `static` for individual components of an unpack declaration");
+                return fail();
+            }
+            if (d_storage_class & STC.manifest && !(storage_class & STC.manifest))
+            {
+                dmd.errors.error(loc, "cannot specify `enum` for individual components of an unpack declaration");
+                return fail();
+            }
+        }
+
+        Expressions* exps = null;
+        if (tup.isAliasThisTuple())
+        {
+            assert(decl.dim != 0);
+            import dmd.sideeffect;
+            auto v = copyToTemp(0, "__tup", tup);
+            v.dsymbolSemantic(sc);
+            auto ve = new VarExp(loc, v);
+            ve.type = tup.type;
+
+            exps.setDim(1);
+            (*exps)[0] = ve;
+            expandAliasThisTuples(exps, 0);
+        }
+        else
+        {
+            exps = tup.exps;
+            expandTuples(exps);
+        }
+        assert(exps.dim == decl.dim);
+
+        foreach (i, d; *decl)
+        {
+            auto exp = (*exps)[i];
+            if (i == 0)
+            {
+                exp = Expression.combine(tup.e0, exp);
+            }
+            if (auto var = d.isVarDeclaration())
+            {
+                assert (!var._init);
+                var._init = new ExpInitializer(exp.loc, exp);
+            }
+            else if (auto unp = d.isUnpackDeclaration())
+            {
+                assert (!unp._init);
+                unp._init = exp;
+            }
+            else
+            {
+                assert(0);
+            }
+            if (_scope)
+            {
+                d.addMember(_scope, scopesym);
+            }
+        }
+        if (_scope)
+        {
+            foreach (d; *decl)
+            {
+                d.setScope(_scope);
+            }
+        }
+        lowered = true;
+    }
+
+    override Dsymbols* include(Scope* sc)
+    {
+        if (errors)
+            return null;
+        if (onStack)
+            return null;
+        onStack = true;
+        scope(exit) onStack = false;
+        lower(_scope ? _scope : sc);
+        if (!lowered)
+            return null;
+        // TODO: call include recursively?
+        return decl;
+    }
+
+    override void addMember(Scope* sc, ScopeDsymbol sds)
+    {
+        // used only for caching the enclosing symbol
+        this.scopesym = sds;
+    }
+
+    override final void addComment(const(char)* comment)
+    {
+        // do nothing
+        // change this to give semantics to documentation comments on unpack declarations
+    }
+
+    override void setScope(Scope* sc)
+    {
+        Dsymbol.setScope(sc);
+    }
+
+    override void importAll(Scope* sc)
+    {
+        // do not evaluate variable declarations before semantic pass
+    }
+
+    override Dsymbol syntaxCopy(Dsymbol s)
+    {
+        return new UnpackDeclaration(loc, Dsymbol.arraySyntaxCopy(decl), _init.syntaxCopy(), storage_class);
+    }
+
+    override const(char)* toChars()
+    {
+        return "unpack declaration\n";
+    }
+    override const(char)* kind() const
+    {
+        return "unpack declaration";
+    }
+
+    final override inout(UnpackDeclaration) isUnpackDeclaration() inout
+    {
+        return this;
     }
 
     override void accept(Visitor v)

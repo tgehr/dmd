@@ -1117,6 +1117,10 @@ final class Parser(AST) : Lexer
                 nextToken();
                 continue;
 
+            case TOK.leftParentheses:
+                s = parseUnpackDeclaration(getStorageClass!AST(pAttrs));
+                break;
+
             default:
                 error("declaration expected, not `%s`", token.toChars());
             Lerror:
@@ -1170,8 +1174,7 @@ final class Parser(AST) : Lexer
                 return false;
         }
     }
-	
-    AST.UnpackDeclaration parseUnpackDeclaration(StorageClass storage_class)
+    AST.UnpackDeclaration parseUnpackDeclaration(StorageClass g_storage_class, bool parseInitializer = true)
     in
     {
         assert(token.value == TOK.leftParentheses);
@@ -1189,6 +1192,7 @@ final class Parser(AST) : Lexer
             auto setAlignment = false;
             AST.Expression ealign = null;
             AST.Expressions* udas = null;
+            auto storage_class = g_storage_class;
             parseStorageClasses(storage_class, link, setAlignment, ealign, udas);
 
             /+if (link)
@@ -1197,7 +1201,7 @@ final class Parser(AST) : Lexer
                 error("user defined attributes not allowed within unpack declarations");
             if (token.value == TOK.leftParentheses)
             {
-                vars.push(parseUnpackDeclaration(storage_class));
+                vars.push(parseUnpackDeclaration(storage_class, false));
             }
             else
             {
@@ -1249,9 +1253,13 @@ final class Parser(AST) : Lexer
             error("expected ')' to close unpack declarators");
         }
         nextToken();
-        check(TOK.assign);
-        auto _init = parseInitializer();
-        return new AST.UnpackDeclaration(unpackLoc, vars, _init, storage_class);
+        AST.Expression _init = null;
+        if (parseInitializer)
+        {
+            check(TOK.assign);
+            _init = parseAssignExp();
+        }
+        return new AST.UnpackDeclaration(unpackLoc, vars, _init, g_storage_class);
     }
 
     /*****************************************

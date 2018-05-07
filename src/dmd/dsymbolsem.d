@@ -1856,6 +1856,11 @@ private extern(C++) final class DsymbolSemanticVisitor : Visitor
         attribSemantic(sfd);
     }
 
+    override void visit(UnpackDeclaration unp)
+    {
+        attribSemantic(unp);
+    }
+
     private Dsymbols* compileIt(CompileDeclaration cd)
     {
         //printf("CompileDeclaration::compileIt(loc = %d) %s\n", cd.loc.linnum, cd.exp.toChars());

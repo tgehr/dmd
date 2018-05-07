@@ -46,7 +46,6 @@ public:
     void visit(AST.FuncDeclaration s) { visit(cast(AST.Declaration)s); }
     void visit(AST.AliasDeclaration s) { visit(cast(AST.Declaration)s); }
     void visit(AST.TupleDeclaration s) { visit(cast(AST.Declaration)s); }
-    void visit(AST.UnpackDeclaration s) { visit(cast(AST.Declaration)s); }
 
     // FuncDeclarations
     void visit(AST.FuncLiteralDeclaration s) { visit(cast(AST.FuncDeclaration)s); }
@@ -74,6 +73,7 @@ public:
     void visit(AST.StorageClassDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
     void visit(AST.ConditionalDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
     void visit(AST.StaticForeachDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
+    void visit(AST.UnpackDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
 
     //==============================================================================================
     // Miscellaneous
