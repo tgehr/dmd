@@ -5461,6 +5461,7 @@ extern (C++) final class CallExp : UnaExp
     Expressions* arguments; // function arguments
     FuncDeclaration f;      // symbol to call
     bool directcall;        // true if a virtual call is devirtualized
+    bool noaliasthis;       // true if `alias this` should not be tried for argument
 
     extern (D) this(const ref Loc loc, Expression e, Expressions* exps)
     {
