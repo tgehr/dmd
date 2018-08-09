@@ -5816,6 +5816,85 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
             }
         }
 
+        // resolve alias this of a single function argument
+        if (!exp.noaliasthis && exp.arguments && exp.arguments.length == 1)
+        {
+            auto arg = (*exp.arguments)[0];
+            if (arg)
+            {
+                arg = (*exp.arguments)[0] = arg.expressionSemantic(sc);
+                arg = resolveProperties(sc, arg);
+            }
+            if (arg && arg.type)
+            {
+                if (arg.op == EXP.tuple)
+                {
+                    auto tpl = cast(TupleExp)arg;
+                    if (tpl.exps.length == 1)
+                    {
+                        if (tpl.e0)
+                        {
+                            arg = new CommaExp(arg.loc, tpl.e0, (*tpl.exps)[0]);
+                            arg = arg.expressionSemantic(sc);
+                        }
+                        else
+                        {
+                            arg = (*tpl.exps)[0];
+                        }
+                    }
+                }
+                if (AggregateDeclaration ad = isAggregate(arg.type))
+                {
+                    if (ad.aliasthis)
+                    {
+                        // expression of shape `fun(arg)`, where `arg` has an `alias this`.
+                        // need to speculatively call it to figure out whether `alias this` should be tried.
+                        CallExp callExpCopy = exp.syntaxCopy();
+                        callExpCopy.noaliasthis = true; // try without `alias this` rewrite
+                        auto oldGagged = global.startGagging();
+                        auto expCopy = callExpCopy.expressionSemantic(sc);
+                        auto att1 = arg.type.checkAliasThisRec() ? arg.type : null;
+                        if (global.endGagging(oldGagged))
+                        {
+                            // calling did not work, need to try alias this
+                            do{ // loop to check for alias this cycle
+                                arg = resolveAliasThis(sc, arg);
+                                auto newArgs = new Expressions();
+                                newArgs.push(arg);
+                                auto newCall = new CallExp(exp.loc, exp.e1, newArgs);
+                                if (att1)
+                                {
+                                    newCall.noaliasthis = true;
+                                }
+                                oldGagged = global.startGagging();
+                                auto newCall2 = newCall.expressionSemantic(sc);
+                                if (!global.endGagging(oldGagged))
+                                {
+                                    // `alias this` rewrite worked, use
+                                    // TODO: this probably gags warnings, which would be a bug...
+                                    // alternative: replace exp with new version
+                                    result = newCall2;
+                                    return;
+                                }
+                                if (!arg.type || arg.type == att1)
+                                {
+                                    break;
+                                }
+                                ad = isAggregate(arg.type);
+                            }while(att1 && ad && ad.aliasthis);
+                        }
+                        else
+                        {
+                            // no errors, can reuse speculative call (TODO: this probably gags warnings, which would be a bug...)
+                            // alternative: do nothing
+                            result = expCopy;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
         Type att = null;
     Lagain:
         //printf("Lagain: %s\n", toChars());
