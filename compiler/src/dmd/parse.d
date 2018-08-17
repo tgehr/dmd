@@ -8845,9 +8845,34 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                     goto case_delegate;
                 }
 
-                // ( expression )
                 nextToken();
-                e = parseExpression();
+
+                if (token.value == TOK.rightParenthesis)
+                {
+                    // empty tuple ()
+                    e = new AST.CallExp(loc, new AST.DotIdExp(loc, new AST.DotIdExp(loc, new AST.IdentifierExp(loc, Id.std), Id.typecons), Id.tuple), new AST.Expressions());
+                    break;
+                }
+                e = parseAssignExp();
+                if (token.value == TOK.comma)
+                {
+                    // tuple expression
+                    nextToken();
+                    auto arguments = new AST.Expressions();
+                    arguments.push(e);
+                    while (token.value != TOK.rightParenthesis && token.value != TOK.endOfFile)
+                    {
+                        auto arg = parseAssignExp();
+                        arguments.push(arg);
+                        if (token.value == TOK.rightParenthesis)
+                            break;
+                        check(TOK.comma);
+                    }
+                    e = new AST.CallExp(loc, new AST.DotIdExp(loc, new AST.DotIdExp(loc, new AST.IdentifierExp(loc, Id.std), Id.typecons), Id.tuple), arguments);
+                    check(loc, TOK.rightParenthesis);
+                    break;
+                }
+                // ( expression )
                 e.parens = true;
                 check(loc, TOK.rightParenthesis);
                 break;
