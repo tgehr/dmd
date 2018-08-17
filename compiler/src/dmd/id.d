@@ -405,6 +405,8 @@ immutable Msgtable[] msgtable =
     { "outpw"},
     { "builtinsModuleName", "builtins" },
     { "ctfeWrite", "__ctfeWrite" },
+    { "typecons" }, // TODO: remove and put tuple and Tuple in object.d
+    { "tuple" },
 
     // Traits
     { "isAbstractClass" },
