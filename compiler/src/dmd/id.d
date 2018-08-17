@@ -442,6 +442,8 @@ immutable Msgtable[] msgtable =
     { "outp"},
     { "outpl"},
     { "outpw"},
+    { "typecons" }, // TODO: remove and put tuple and Tuple in object.d
+    { "tuple" },
 
     // Traits
     { "isAbstractClass" },
