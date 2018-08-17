@@ -2875,6 +2875,21 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
             }
             if (arg && arg.type)
             {
+                if (arg.op == TOK.tuple)
+                {
+                    auto tpl = cast(TupleExp)arg;
+                    if (tpl.exps.dim == 1)
+                    {
+                        if (tpl.e0)
+                        {
+                            arg = new CommaExp(arg.loc, tpl.e0, (*tpl.exps)[0]);
+                        }
+                        else
+                        {
+                            arg = (*tpl.exps)[0];
+                        }
+                    }
+                }
                 if (AggregateDeclaration ad = isAggregate(arg.type))
                 {
                     if (ad.aliasthis)
