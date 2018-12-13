@@ -213,6 +213,7 @@ enum TY : ubyte
     Ttypeof,
     Ttuple,
     Tslice,
+    TtupleTy,
     Treturn,
 
     Tnull,
@@ -265,6 +266,7 @@ alias Tinstance = TY.Tinstance;
 alias Ttypeof = TY.Ttypeof;
 alias Ttuple = TY.Ttuple;
 alias Tslice = TY.Tslice;
+alias TtupleTy = TY.TtupleTy;
 alias Treturn = TY.Treturn;
 alias Tnull = TY.Tnull;
 alias Tvector = TY.Tvector;
