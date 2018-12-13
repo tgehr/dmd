@@ -4531,6 +4531,19 @@ private void typeToBufferx(Type t, ref OutBuffer buf, ref HdrGenState hgs)
         buf.put(']');
     }
 
+    void visitTupleTy(TypeTupleTy t)
+    {
+        buf.writeByte('(');
+        foreach (i; 0 .. t.types.length)
+        {
+            typeToBufferx((*t.types)[i], buf, hgs);
+            if (t.types.length == 1 || i+1 < t.types.length) {
+                buf.writeByte(',');
+            }
+        }
+        buf.writeByte(')');
+    }
+
     void visitNull(TypeNull t)
     {
         buf.put("typeof(null)");
@@ -4579,6 +4592,7 @@ private void typeToBufferx(Type t, ref OutBuffer buf, ref HdrGenState hgs)
         case Tclass:     return visitClass(cast(TypeClass)t);
         case Ttuple:     return visitTuple (cast(TypeTuple)t);
         case Tslice:     return visitSlice(cast(TypeSlice)t);
+        case TtupleTy:   return visitTupleTy(cast(TypeTupleTy)t);
         case Tnull:      return visitNull(cast(TypeNull)t);
         case Tmixin:     return visitMixin(cast(TypeMixin)t);
         case Tnoreturn:  return visitNoreturn(cast(TypeNoreturn)t);
