@@ -2694,6 +2694,7 @@ struct ASTBase
                 sizeTy[Tclass] = __traits(classInstanceSize, TypeClass);
                 sizeTy[Ttuple] = __traits(classInstanceSize, TypeTuple);
                 sizeTy[Tslice] = __traits(classInstanceSize, TypeSlice);
+                sizeTy[TtupleTy] = __traits(classInstanceSize, TypeTupleTy);
                 sizeTy[Treturn] = __traits(classInstanceSize, TypeReturn);
                 sizeTy[Terror] = __traits(classInstanceSize, TypeError);
                 sizeTy[Tnull] = __traits(classInstanceSize, TypeNull);
@@ -3463,6 +3464,7 @@ struct ASTBase
             inout(TypeClass)      isTypeClass()      { return ty == Tclass     ? cast(typeof(return))this : null; }
             inout(TypeTuple)      isTypeTuple()      { return ty == Ttuple     ? cast(typeof(return))this : null; }
             inout(TypeSlice)      isTypeSlice()      { return ty == Tslice     ? cast(typeof(return))this : null; }
+            inout(TypeTupleTy)    isTypeTupleTy()    { return ty == TtupleTy   ? cast(typeof(return))this : null; }
             inout(TypeNull)       isTypeNull()       { return ty == Tnull      ? cast(typeof(return))this : null; }
             inout(TypeMixin)      isTypeMixin()      { return ty == Tmixin     ? cast(typeof(return))this : null; }
             inout(TypeTraits)     isTypeTraits()     { return ty == Ttraits    ? cast(typeof(return))this : null; }
@@ -3472,6 +3474,20 @@ struct ASTBase
         override void accept(Visitor v)
         {
             v.visit(this);
+        }
+
+        extern (D) static Types* arraySyntaxCopy(Types* types)
+        {
+            Types* a = null;
+            if (types)
+            {
+                a = new Types(types.length);
+                foreach (i, t; *types)
+                {
+                    (*a)[i] = t ? t.syntaxCopy() : null;
+                }
+            }
+            return a;
         }
     }
 
@@ -3911,6 +3927,29 @@ struct ASTBase
         override TypeSlice syntaxCopy()
         {
             auto t = new TypeSlice(next.syntaxCopy(), lwr.syntaxCopy(), upr.syntaxCopy());
+            t.mod = mod;
+            return t;
+        }
+
+        override void accept(Visitor v)
+        {
+            v.visit(this);
+        }
+    }
+
+    extern (C++) final class TypeTupleTy : Type
+    {
+        Types* types;
+        extern (D) this(Types* types)
+        {
+            super(TtupleTy);
+            this.types = types;
+        }
+
+        override TypeTupleTy syntaxCopy()
+        {
+            Types* tys = Type.arraySyntaxCopy(types);
+            auto t = new TypeTupleTy(tys);
             t.mod = mod;
             return t;
         }
