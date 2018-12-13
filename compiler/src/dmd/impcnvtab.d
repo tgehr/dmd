@@ -105,6 +105,7 @@ ImpCnvTab generateImpCnvTab()
         Ttypeof,
         Ttuple,
         Tslice,
+        TtupleTy,
         Treturn,
         Tnull,
         Tvector,
