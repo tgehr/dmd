@@ -2,18 +2,19 @@
 REQUIRED_ARGS: -preview=tuples -vcolumns
 TEST_OUTPUT:
 ---
-fail_compilation/unpacking.d(29,14): Error: unpacked variable `b` needs a type or at least one storage class, did you mean `auto b`?
-fail_compilation/unpacking.d(30,15): Error: unpacked variable `b` needs a type or at least one storage class, did you mean `auto b`?
-fail_compilation/unpacking.d(30,18): Error: unpacked variable `c` needs a type or at least one storage class, did you mean `auto c`?
-fail_compilation/unpacking.d(31,23): Error: unpacked variable `c` needs a type or at least one storage class, did you mean `auto c`?
-fail_compilation/unpacking.d(33,16): Error: found `,` when expecting `=` following unpack declaration
-fail_compilation/unpacking.d(34,10): Error: unexpected identifier `a` in declarator
-fail_compilation/unpacking.d(34,17): Error: unexpected identifier `b` in declarator
-fail_compilation/unpacking.d(36,17): Error: expected identifier after type `int` in unpack declaration
-fail_compilation/unpacking.d(38,16): Error: `auto ref` unpacked variables are not supported
-fail_compilation/unpacking.d(39,25): Error: unpacking `auto ref` parameters is not supported
-fail_compilation/unpacking.d(40,21): Error: unpacking `lazy` parameters is not supported
-fail_compilation/unpacking.d(40,34): Error: unpacking `out` parameters is not supported
+fail_compilation/unpacking.d(30,14): Error: unpacked variable `b` needs a type or at least one storage class, did you mean `auto b`?
+fail_compilation/unpacking.d(31,15): Error: unpacked variable `b` needs a type or at least one storage class, did you mean `auto b`?
+fail_compilation/unpacking.d(31,18): Error: unpacked variable `c` needs a type or at least one storage class, did you mean `auto c`?
+fail_compilation/unpacking.d(32,23): Error: unpacked variable `c` needs a type or at least one storage class, did you mean `auto c`?
+fail_compilation/unpacking.d(34,16): Error: variable name expected after type `(a,b)`, not `,`
+fail_compilation/unpacking.d(34,16): Error: found `,` instead of statement
+fail_compilation/unpacking.d(35,10): Error: unexpected identifier `a` in declarator
+fail_compilation/unpacking.d(35,17): Error: unexpected identifier `b` in declarator
+fail_compilation/unpacking.d(37,17): Error: expected identifier after type `int` in unpack declaration
+fail_compilation/unpacking.d(39,16): Error: `auto ref` unpacked variables are not supported
+fail_compilation/unpacking.d(40,25): Error: unpacking `auto ref` parameters is not supported
+fail_compilation/unpacking.d(41,21): Error: unpacking `lazy` parameters is not supported
+fail_compilation/unpacking.d(41,34): Error: unpacking `out` parameters is not supported
 ---
 */
 

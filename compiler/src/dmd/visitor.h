@@ -198,6 +198,7 @@ class NullExp;
 class StringExp;
 class InterpExp;
 class TupleExp;
+class TupleLiteralExp;
 class ArrayLiteralExp;
 class AssocArrayLiteralExp;
 class StructLiteralExp;
@@ -485,6 +486,7 @@ public:
     virtual void visit(StringExp *e) { visit((Expression *)e); }
     virtual void visit(InterpExp *e) { visit((Expression *)e); }
     virtual void visit(NewExp *e) { visit((Expression *)e); }
+    virtual void visit(TupleLiteralExp *e) { visit((Expression *)e); }
     virtual void visit(AssocArrayLiteralExp *e) { visit((Expression *)e); }
     virtual void visit(ArrayLiteralExp *e) { visit((Expression *)e); }
     virtual void visit(MixinExp *e) { visit((Expression *)e); }

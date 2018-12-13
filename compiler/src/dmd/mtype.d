@@ -394,6 +394,7 @@ extern (C++) abstract class Type : ASTNode
             sizeTy[Tclass] = __traits(classInstanceSize, TypeClass);
             sizeTy[Ttuple] = __traits(classInstanceSize, TypeTuple);
             sizeTy[Tslice] = __traits(classInstanceSize, TypeSlice);
+            sizeTy[TtupleTy] = __traits(classInstanceSize, TypeTupleTy);
             sizeTy[Treturn] = __traits(classInstanceSize, TypeReturn);
             sizeTy[Terror] = __traits(classInstanceSize, TypeError);
             sizeTy[Tnull] = __traits(classInstanceSize, TypeNull);
@@ -1517,6 +1518,7 @@ extern (C++) abstract class Type : ASTNode
         inout(TypeClass)      isTypeClass()      { return ty == Tclass     ? cast(typeof(return))this : null; }
         inout(TypeTuple)      isTypeTuple()      { return ty == Ttuple     ? cast(typeof(return))this : null; }
         inout(TypeSlice)      isTypeSlice()      { return ty == Tslice     ? cast(typeof(return))this : null; }
+        inout(TypeTupleTy)    isTypeTupleTy()    { return ty == TtupleTy   ? cast(typeof(return))this : null; }
         inout(TypeNull)       isTypeNull()       { return ty == Tnull      ? cast(typeof(return))this : null; }
         inout(TypeMixin)      isTypeMixin()      { return ty == Tmixin     ? cast(typeof(return))this : null; }
         inout(TypeTraits)     isTypeTraits()     { return ty == Ttraits    ? cast(typeof(return))this : null; }
@@ -3680,6 +3682,57 @@ extern (C++) final class TypeSlice : TypeNext
     }
 }
 
+extern (C++) final class TypeTupleTy : Type
+{
+    Types* types;
+    extern (D) this(Types* types)
+    {
+        super(TtupleTy);
+        this.types = types;
+    }
+
+    override const(char)* kind() const
+    {
+        return "tuple type";
+    }
+
+    override TypeTupleTy syntaxCopy()
+    {
+        Types* tys = Type.arraySyntaxCopy(types);
+        auto t = new TypeTupleTy(tys);
+        t.mod = mod;
+        return t;
+    }
+
+    override bool equals(const RootObject o) const
+    {
+        Type t = cast(Type)o;
+        //printf("TypeTuple::equals(%s, %s)\n", toChars(), t.toChars());
+        if (this == t)
+            return true;
+        if (auto tt = t.isTypeTupleTy())
+        {
+            if (types.length == tt.types.length)
+            {
+                for (size_t i = 0; i < tt.types.length; i++)
+                {
+                    const Type arg1 = (*types)[i];
+                    Type arg2 = (*tt.types)[i];
+                    if (!arg1.equals(arg2))
+                        return false;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    override void accept(Visitor v)
+    {
+        v.visit(this);
+    }
+}
+
 /***********************************************************
  */
 extern (C++) final class TypeNull : Type
@@ -4527,6 +4580,7 @@ mixin template VisitType(Result)
             case TY.Ttypeof:    mixin(visitTYCase("Typeof"));
             case TY.Ttuple:     mixin(visitTYCase("Tuple"));
             case TY.Tslice:     mixin(visitTYCase("Slice"));
+            case TY.TtupleTy:   mixin(visitTYCase("TupleTy"));
             case TY.Treturn:    mixin(visitTYCase("Return"));
             case TY.Tnull:      mixin(visitTYCase("Null"));
             case TY.Tvector:    mixin(visitTYCase("Vector"));

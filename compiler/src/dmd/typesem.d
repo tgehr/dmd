@@ -604,6 +604,11 @@ Expression typeToExpression(Type t)
         return typeToExpressionHelper(t, new ScopeExp(t.loc, t.tempinst));
     }
 
+    static Expression visitTupleTy(TypeTupleTy t)
+    {
+        assert(0,"TODO?");
+    }
+
     // easy way to enable 'auto v = new int[mixin("exp")];' in 2.088+
     static Expression visitMixin(TypeMixin t)
     {
@@ -618,6 +623,7 @@ Expression typeToExpression(Type t)
         case Taarray:   return visitAArray(t.isTypeAArray());
         case Tident:    return visitIdentifier(t.isTypeIdentifier());
         case Tinstance: return visitInstance(t.isTypeInstance());
+        case TtupleTy:  return visitTupleTy(t.isTypeTupleTy());
         case Tmixin:    return visitMixin(t.isTypeMixin());
         default:        return null;
     }
@@ -3004,6 +3010,23 @@ Type typeSemantic(Type type, Loc loc, Scope* sc)
         return t.typeSemantic(loc, sc);
     }
 
+    Type visitTupleTy(TypeTupleTy mtype)
+    {
+        // rewrite (T, ...) to Tuple!(T, ...)
+        auto tiargs = new Objects();
+        tiargs.reserve(mtype.types.length);
+        foreach (i; 0 .. mtype.types.length)
+        {
+            //(*mtype.types)[i] = (*mtype.types)[i].typeSemantic(loc, sc);
+            tiargs.push((*mtype.types)[i]);
+        }
+        auto tempinst = new TemplateInstance(loc, Id.Tuple, tiargs);
+        TypeQualified tq = new TypeIdentifier(loc, Id.std);
+        tq.addIdent(Id.typecons);
+        tq.addInst(tempinst);
+        return tq.typeSemantic(loc, sc);
+    }
+
     Type visitMixin(TypeMixin mtype)
     {
         //printf("TypeMixin::semantic() %s\n", toChars());
@@ -3251,6 +3274,7 @@ Type typeSemantic(Type type, Loc loc, Scope* sc)
         case Tclass:     return visitClass(type.isTypeClass());
         case Ttuple:     return visitTuple(type.isTypeTuple());
         case Tslice:     return visitSlice(type.isTypeSlice());
+        case TtupleTy:   return visitTupleTy(type.isTypeTupleTy());
         case Tmixin:     return visitMixin(type.isTypeMixin());
         case Ttag:       return visitTag(type.isTypeTag());
     }
@@ -4369,6 +4393,11 @@ void resolve(Type mt, Loc loc, Scope* sc, out Expression pe, out Type pt, out Ds
         }
     }
 
+    void visitTupleTy(TypeTupleTy tt)
+    {
+        return visitType(tt);
+    }
+
     void visitMixin(TypeMixin mt)
     {
         RootObject o = mt.obj;
@@ -4519,6 +4548,7 @@ void resolve(Type mt, Loc loc, Scope* sc, out Expression pe, out Type pt, out Ds
         case Ttypeof:   visitTypeof    (mt.isTypeTypeof());     break;
         case Treturn:   visitReturn    (mt.isTypeReturn());     break;
         case Tslice:    visitSlice     (mt.isTypeSlice());      break;
+        case TtupleTy:  visitTupleTy   (mt.isTypeTupleTy());    break;
         case Tmixin:    visitMixin     (mt.isTypeMixin());      break;
         case Ttraits:   visitTraits    (mt.isTypeTraits());     break;
     }
