@@ -1908,6 +1908,29 @@ MATCH implicitConvTo(Type from, Type to)
         return MATCH.nomatch;
     }
 
+    MATCH visitTypeTupleTy(TypeTupleTy from)
+    {
+        if (from == to)
+            return MATCH.exact;
+        if (auto tt = to.isTypeTupleTy())
+        {
+            if (from.types.length == tt.types.length)
+            {
+                MATCH m = MATCH.exact;
+                for (size_t i = 0; i < tt.types.length; i++)
+                {
+                    Type arg1 = (*from.types)[i];
+                    Type arg2 = (*tt.types)[i];
+                    MATCH mi = arg1.implicitConvTo(arg2);
+                    if (mi < m)
+                        m = mi;
+                }
+                return m;
+            }
+        }
+        return MATCH.nomatch;
+    }
+
     MATCH visitNull(TypeNull from)
     {
         //printf("TypeNull::implicitConvTo(this=%p, to=%p)\n", from, to);
@@ -1957,6 +1980,7 @@ MATCH implicitConvTo(Type from, Type to)
         case Tenum:          return visitEnum(from.isTypeEnum());
         case Tclass:         return visitClass(from.isTypeClass());
         case Ttuple:         return visitTuple(from.isTypeTuple());
+        case TtupleTy:       return visitTypeTupleTy(from.isTypeTupleTy());
         case Tnull:          return visitNull(from.isTypeNull());
         case Tnoreturn:      return visitNoreturn(from.isTypeNoreturn());
     }
