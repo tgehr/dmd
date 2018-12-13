@@ -1097,9 +1097,11 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 continue;
 
             case TOK.leftParenthesis:
-                // confirm unpacking for better error messages:
-                if (compileEnv.tuples && peekPastParen(&token).value == TOK.assign)
+                if (compileEnv.tuples)
+                {
+                    // TODO: this affects error messages
                     goto Ldeclaration;
+                }
                 goto default;
 
             // The following are all errors, the cases are just for better error messages than the default case
@@ -1207,7 +1209,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 error("linkage specification not allowed within unpack declarations");+/
             if (udas) // TODO
                 error("user defined attributes not allowed within unpack declarations");
-            if (token.value == TOK.leftParenthesis)
+            if (token.value == TOK.leftParenthesis && peekPastParen(&token).value != TOK.identifier)
             {
                 // recurse
                 vars.push(parseUnpackDeclaration(storage_class, false, isParameter));
@@ -4027,6 +4029,29 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
             }
             break;
 
+        case TOK.leftParenthesis:
+            if (!compileEnv.tuples)
+            {
+                goto default;
+            }
+            loc = token.loc;
+            nextToken();
+            bool needComma = true;
+            auto types = new AST.Types();
+            while (token.value != TOK.rightParenthesis)
+            {
+                types.push(parseType());
+                if (needComma)
+                    check(TOK.comma);
+                else if(token.value != TOK.comma)
+                    break;
+                else nextToken();
+                needComma = false;
+            }
+            check(TOK.rightParenthesis);
+            t=new AST.TypeTupleTy(types);
+            break;
+
         case TOK.mixin_:
             // https://dlang.org/spec/expression.html#mixin_types
             loc = token.loc;
@@ -4805,7 +4830,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
              *  storage_class (a, b, ...) = initializer;
              */
             if (compileEnv.tuples && token.value == TOK.leftParenthesis &&
-                isTupleNotation(&token))
+                isTupleNotation(&token) && peekPastParen(&token).value == TOK.assign)
             {
                 // TODO: can we merge this with the branch below?
                 AST.Dsymbols* a = parseAutoDeclarations(storage_class | (pAttrs ? pAttrs.storageClass : STC.none), comment);
@@ -7759,6 +7784,39 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
             }
             break;
 
+        case TOK.leftParenthesis:
+            if (!compileEnv.tuples)
+            {
+                goto default;
+            }
+            t = peek(t);
+            if (t.value == TOK.rightParenthesis)
+            {
+                t = peek(t);
+                if (token.value == TOK.goesTo || token.value == TOK.leftCurly ||
+                    skipAttributes(t, &t) && (t.value == TOK.goesTo || t.value == TOK.leftCurly))
+                {
+                    goto Lfalse;
+                }
+                break;
+            }
+            while (t.value != TOK.rightParenthesis && t.value != TOK.endOfFile)
+            {
+                if (!isDeclaration(t, NeedDeclaratorId.no, TOK.reserved, &t))
+                {
+                    goto Lfalse;
+                }
+                if (t.value != TOK.comma)
+                    break;
+                t = peek(t);
+            }
+            if (t.value != TOK.rightParenthesis)
+            {
+                goto Lfalse;
+            }
+            t = peek(t);
+            break;
+
         case TOK.dot:
             goto Ldot;
 
@@ -8979,31 +9037,37 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 }
 
                 nextToken();
-
-                if (token.value == TOK.rightParenthesis)
+                if (compileEnv.tuples)
                 {
-                    // empty tuple ()
-                    e = new AST.CallExp(loc, new AST.DotIdExp(loc, new AST.DotIdExp(loc, new AST.IdentifierExp(loc, Id.std), Id.typecons), Id.tuple), new AST.Expressions());
-                    break;
-                }
-                e = parseAssignExp();
-                if (token.value == TOK.comma)
-                {
-                    // tuple expression
-                    nextToken();
-                    auto arguments = new AST.Expressions();
-                    arguments.push(e);
-                    while (token.value != TOK.rightParenthesis && token.value != TOK.endOfFile)
+                    if (token.value == TOK.rightParenthesis)
                     {
-                        auto arg = parseAssignExp();
-                        arguments.push(arg);
-                        if (token.value == TOK.rightParenthesis)
-                            break;
-                        check(TOK.comma);
+                        // empty tuple ()
+                        e = new AST.CallExp(loc, new AST.DotIdExp(loc, new AST.DotIdExp(loc, new AST.IdentifierExp(loc, Id.std), Id.typecons), Id.tuple), new AST.Expressions());
+                        break;
                     }
-                    e = new AST.CallExp(loc, new AST.DotIdExp(loc, new AST.DotIdExp(loc, new AST.IdentifierExp(loc, Id.std), Id.typecons), Id.tuple), arguments);
-                    check(loc, TOK.rightParenthesis);
-                    break;
+                    e = parseAssignExp();
+                    if (token.value == TOK.comma)
+                    {
+                        // tuple expression
+                        nextToken();
+                        auto arguments = new AST.Expressions();
+                        arguments.push(e);
+                        while (token.value != TOK.rightParenthesis && token.value != TOK.endOfFile)
+                        {
+                            auto arg = parseAssignExp();
+                            arguments.push(arg);
+                            if (token.value == TOK.rightParenthesis)
+                                break;
+                            check(TOK.comma);
+                        }
+                        e = new AST.CallExp(loc, new AST.DotIdExp(loc, new AST.DotIdExp(loc, new AST.IdentifierExp(loc, Id.std), Id.typecons), Id.tuple), arguments);
+                        check(loc, TOK.rightParenthesis);
+                        break;
+                    }
+                }
+                else
+                {
+                    e = parseExpression();
                 }
                 // ( expression )
                 e.parens = true;

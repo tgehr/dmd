@@ -158,6 +158,11 @@ Expression typeToExpression(Type t)
         return typeToExpressionHelper(t, new ScopeExp(t.loc, t.tempinst));
     }
 
+    static Expression visitTupleTy(TypeTupleTy t)
+    {
+        assert(0, "TODO?");
+    }
+
     // easy way to enable 'auto v = new int[mixin("exp")];' in 2.088+
     static Expression visitMixin(TypeMixin t)
     {
@@ -172,6 +177,7 @@ Expression typeToExpression(Type t)
         case Taarray:   return visitAArray(t.isTypeAArray());
         case Tident:    return visitIdentifier(t.isTypeIdentifier());
         case Tinstance: return visitInstance(t.isTypeInstance());
+        case TtupleTy:  return visitTupleTy(t.isTypeTupleTy());
         case Tmixin:    return visitMixin(t.isTypeMixin());
         default:        return null;
     }
@@ -512,6 +518,7 @@ extern (C++) abstract class Type : ASTNode
             sizeTy[Tclass] = __traits(classInstanceSize, TypeClass);
             sizeTy[Ttuple] = __traits(classInstanceSize, TypeTuple);
             sizeTy[Tslice] = __traits(classInstanceSize, TypeSlice);
+            sizeTy[TtupleTy] = __traits(classInstanceSize, TypeTupleTy);
             sizeTy[Treturn] = __traits(classInstanceSize, TypeReturn);
             sizeTy[Terror] = __traits(classInstanceSize, TypeError);
             sizeTy[Tnull] = __traits(classInstanceSize, TypeNull);
@@ -567,6 +574,22 @@ extern (C++) abstract class Type : ASTNode
                     return false;
             }
             return true;
+        }
+        if (ty == TtupleTy)
+        {
+            if (t.ty != TtupleTy)
+                return false;
+            auto t1 = this.isTypeTupleTy();
+            auto t2 = t.isTypeTupleTy();
+            if (t1.types.length != t2.types.length)
+                return false;
+            for (size_t i = 0; i < t1.types.length; i++)
+            {
+                const Type arg1 = (*t1.types)[i];
+                const Type arg2 = (*t2.types)[i];
+                if (!arg1.equals(arg2))
+                    return false;
+            }
         }
         // deco strings are unique
         // and semantic() has been run
@@ -796,6 +819,7 @@ extern (C++) abstract class Type : ASTNode
         inout(TypeClass)      isTypeClass()      { return ty == Tclass     ? cast(typeof(return))this : null; }
         inout(TypeTuple)      isTypeTuple()      { return ty == Ttuple     ? cast(typeof(return))this : null; }
         inout(TypeSlice)      isTypeSlice()      { return ty == Tslice     ? cast(typeof(return))this : null; }
+        inout(TypeTupleTy)    isTypeTupleTy()    { return ty == TtupleTy   ? cast(typeof(return))this : null; }
         inout(TypeNull)       isTypeNull()       { return ty == Tnull      ? cast(typeof(return))this : null; }
         inout(TypeMixin)      isTypeMixin()      { return ty == Tmixin     ? cast(typeof(return))this : null; }
         inout(TypeTraits)     isTypeTraits()     { return ty == Ttraits    ? cast(typeof(return))this : null; }
@@ -2067,6 +2091,34 @@ extern (C++) final class TypeSlice : TypeNext
     }
 }
 
+extern (C++) final class TypeTupleTy : Type
+{
+    Types* types;
+    extern (D) this(Types* types)
+    {
+        super(TtupleTy);
+        this.types = types;
+    }
+
+    override const(char)* kind() const
+    {
+        return "tuple type";
+    }
+
+    override TypeTupleTy syntaxCopy()
+    {
+        Types* tys = Type.arraySyntaxCopy(types);
+        auto t = new TypeTupleTy(tys);
+        t.mod = mod;
+        return t;
+    }
+
+    override void accept(Visitor v)
+    {
+        v.visit(this);
+    }
+}
+
 /***********************************************************
  */
 extern (C++) final class TypeNull : Type
@@ -2862,6 +2914,7 @@ mixin template VisitType(Result)
             case TY.Ttypeof:    mixin(visitTYCase("Typeof"));
             case TY.Ttuple:     mixin(visitTYCase("Tuple"));
             case TY.Tslice:     mixin(visitTYCase("Slice"));
+            case TY.TtupleTy:   mixin(visitTYCase("TupleTy"));
             case TY.Treturn:    mixin(visitTYCase("Return"));
             case TY.Tnull:      mixin(visitTYCase("Null"));
             case TY.Tvector:    mixin(visitTYCase("Vector"));

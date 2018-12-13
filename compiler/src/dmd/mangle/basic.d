@@ -76,6 +76,7 @@ immutable char[TMAX] mangleChar =
     Terror       : '@',
     Ttypeof      : '@',
     Tslice       : '@',
+    TtupleTy     : '@',
     Treturn      : '@',
     Tvector      : '@',
     Ttraits      : '@',
