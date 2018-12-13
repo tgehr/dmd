@@ -1156,7 +1156,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 error("linkage specification not allowed within unpack declarations");+/
             if (udas) // TODO
                 error("user defined attributes not allowed within unpack declarations");
-            if (token.value == TOK.leftParenthesis)
+            if (token.value == TOK.leftParenthesis && peekPastParen(&token).value != TOK.identifier)
             {
                 vars.push(parseUnpackDeclaration(storage_class, false, isParameter));
             }
@@ -3864,6 +3864,25 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
             {
                 t = parseBasicTypeStartingAt(new AST.TypeIdentifier(loc, id), dontLookDotIdents);
             }
+            break;
+
+        case TOK.leftParenthesis:
+            loc = token.loc;
+            nextToken();
+            bool needComma = true;
+            auto types = new AST.Types();
+            while (token.value != TOK.rightParenthesis)
+            {
+                types.push(parseType());
+                if (needComma)
+                    check(TOK.comma);
+                else if(token.value != TOK.comma)
+                    break;
+                else nextToken();
+                needComma = false;
+            }
+            check(TOK.rightParenthesis);
+            t=new AST.TypeTupleTy(types);
             break;
 
         case TOK.mixin_:
@@ -7575,6 +7594,35 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 }
                 break;
             }
+            break;
+
+        case TOK.leftParenthesis:
+            t = peek(t);
+            if (t.value == TOK.rightParenthesis)
+            {
+                t = peek(t);
+                if (token.value == TOK.goesTo || token.value == TOK.leftCurly ||
+                    skipAttributes(t, &t) && (t.value == TOK.goesTo || t.value == TOK.leftCurly))
+                {
+                    goto Lfalse;
+                }
+                break;
+            }
+            while (t.value != TOK.rightParenthesis && t.value != TOK.endOfFile)
+            {
+                if (!isDeclaration(t, NeedDeclaratorId.no, TOK.reserved, &t))
+                {
+                    goto Lfalse;
+                }
+                if (t.value != TOK.comma)
+                    break;
+                t = peek(t);
+            }
+            if (t.value != TOK.rightParenthesis)
+            {
+                goto Lfalse;
+            }
+            t = peek(t);
             break;
 
         case TOK.dot:
