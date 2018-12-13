@@ -1065,9 +1065,8 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 continue;
 
             case TOK.leftParenthesis:
-                if (peekPastParen(&token).value == TOK.assign) // (confirm unpacking for better error messages)
-                    goto Ldeclaration;
-                goto default;
+                // TODO: this affects error messages
+                goto Ldeclaration;
 
             // The following are all errors, the cases are just for better error messages than the default case
             case TOK.return_:
@@ -1174,7 +1173,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 error("linkage specification not allowed within unpack declarations");+/
             if (udas) // TODO
                 error("user defined attributes not allowed within unpack declarations");
-            if (token.value == TOK.leftParenthesis)
+            if (token.value == TOK.leftParenthesis && peekPastParen(&token).value != TOK.identifier)
             {
                 vars.push(parseUnpackDeclaration(storage_class, false, isParameter));
             }
@@ -3894,6 +3893,25 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
             }
             break;
 
+        case TOK.leftParenthesis:
+            loc = token.loc;
+            nextToken();
+            bool needComma = true;
+            auto types = new AST.Types();
+            while (token.value != TOK.rightParenthesis)
+            {
+                types.push(parseType());
+                if (needComma)
+                    check(TOK.comma);
+                else if(token.value != TOK.comma)
+                    break;
+                else nextToken();
+                needComma = false;
+            }
+            check(TOK.rightParenthesis);
+            t=new AST.TypeTupleTy(types);
+            break;
+
         case TOK.mixin_:
             // https://dlang.org/spec/expression.html#mixin_types
             loc = token.loc;
@@ -4668,7 +4686,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
              *  (int x, auto y) = initializer;
              *  storage_class (a, b, ...) = initializer;
              */
-            if (token.value == TOK.leftParenthesis && isTupleNotation(&token))
+            if (token.value == TOK.leftParenthesis && isTupleNotation(&token) && peekPastParen(&token).value == TOK.assign)
             {
                 // TODO: can we merge this with the branch below?
                 AST.Dsymbols* a = parseAutoDeclarations(storage_class | (pAttrs ? pAttrs.storageClass : STC.none), comment);
@@ -7603,6 +7621,35 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 }
                 break;
             }
+            break;
+
+        case TOK.leftParenthesis:
+            t = peek(t);
+            if (t.value == TOK.rightParenthesis)
+            {
+                t = peek(t);
+                if (token.value == TOK.goesTo || token.value == TOK.leftCurly ||
+                    skipAttributes(t, &t) && (t.value == TOK.goesTo || t.value == TOK.leftCurly))
+                {
+                    goto Lfalse;
+                }
+                break;
+            }
+            while (t.value != TOK.rightParenthesis && t.value != TOK.endOfFile)
+            {
+                if (!isDeclaration(t, NeedDeclaratorId.no, TOK.reserved, &t))
+                {
+                    goto Lfalse;
+                }
+                if (t.value != TOK.comma)
+                    break;
+                t = peek(t);
+            }
+            if (t.value != TOK.rightParenthesis)
+            {
+                goto Lfalse;
+            }
+            t = peek(t);
             break;
 
         case TOK.dot:
