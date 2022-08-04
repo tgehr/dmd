@@ -7668,17 +7668,21 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 goto Lfalse;
             }
             t = peek(t);
+            bool hasComma = false;
             while (t.value != TOK.endOfFile)
             {
                 if (!isDeclaration(t, NeedDeclaratorId.no, TOK.reserved, &t))
                 {
                     goto Lfalse;
                 }
-                if (t.value != TOK.comma)
+                if (t.value == TOK.rightParenthesis)
                     break;
+                if (t.value != TOK.comma)
+                    goto Lfalse;
                 t = peek(t);
+                hasComma = true;
             }
-            if (t.value != TOK.rightParenthesis)
+            if (!hasComma || t.value != TOK.rightParenthesis)
             {
                 goto Lfalse;
             }
@@ -8911,7 +8915,9 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                     if (token.value == TOK.rightParenthesis)
                     {
                         // empty tuple ()
-                        e = new AST.CallExp(loc, new AST.DotIdExp(loc, new AST.DotIdExp(loc, new AST.IdentifierExp(loc, Id.std), Id.typecons), Id.tuple), new AST.Expressions());
+                        nextToken();
+                        auto expressions = new AST.Expressions();
+                        e = new AST.TupleLiteralExp(loc, expressions);
                         break;
                     }
                     e = parseAssignExp();
@@ -8919,17 +8925,17 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                     {
                         // tuple expression
                         nextToken();
-                        auto arguments = new AST.Expressions();
-                        arguments.push(e);
+                        auto elements = new AST.Expressions();
+                        elements.push(e);
                         while (token.value != TOK.rightParenthesis && token.value != TOK.endOfFile)
                         {
-                            auto arg = parseAssignExp();
-                            arguments.push(arg);
+                            auto elem = parseAssignExp();
+                            elements.push(elem);
                             if (token.value == TOK.rightParenthesis)
                                 break;
                             check(TOK.comma);
                         }
-                        e = new AST.CallExp(loc, new AST.DotIdExp(loc, new AST.DotIdExp(loc, new AST.IdentifierExp(loc, Id.std), Id.typecons), Id.tuple), arguments);
+                        e = new AST.TupleLiteralExp(loc, elements);
                         check(loc, TOK.rightParenthesis);
                         break;
                     }
@@ -10023,6 +10029,7 @@ immutable PREC[EXP.max + 1] precedence =
     EXP.complex80 : PREC.primary,
     EXP.null_ : PREC.primary,
     EXP.string_ : PREC.primary,
+    EXP.tupleLiteral : PREC.primary,
     EXP.arrayLiteral : PREC.primary,
     EXP.assocArrayLiteral : PREC.primary,
     EXP.classReference : PREC.primary,
