@@ -729,6 +729,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 /* Look for auto initializers:
                  *      storage_class identifier = initializer;
                  *      storage_class identifier(...) = initializer;
+                 *      storage_class (x, y, ...) = initializer;
                  */
                 if (token.value == TOK.identifier && hasOptionalParensThen(peek(&token), TOK.assign))
                 {
@@ -7624,18 +7625,19 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
             break;
 
         case TOK.leftParenthesis:
-            t = peek(t);
-            if (t.value == TOK.rightParenthesis)
+            Token* tk = peekPastParen(t);
+            if (tk.value == TOK.identifier)
             {
-                t = peek(t);
-                if (token.value == TOK.goesTo || token.value == TOK.leftCurly ||
-                    skipAttributes(t, &t) && (t.value == TOK.goesTo || t.value == TOK.leftCurly))
-                {
-                    goto Lfalse;
-                }
+                t = tk;
                 break;
             }
-            while (t.value != TOK.rightParenthesis && t.value != TOK.endOfFile)
+            if (tk.value == TOK.goesTo || tk.value == TOK.leftCurly ||
+                skipAttributes(tk, &tk) && (tk.value == TOK.goesTo || tk.value == TOK.leftCurly))
+            {
+                goto Lfalse;
+            }
+            t = peek(t);
+            while (t.value != TOK.endOfFile)
             {
                 if (!isDeclaration(t, NeedDeclaratorId.no, TOK.reserved, &t))
                 {
