@@ -1680,7 +1680,13 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
         // https://issues.dlang.org/show_bug.cgi?id=13840
         // Throwable nested function inside nothrow function is acceptable.
         StorageClass stc = mergeFuncAttrs(STC.safe | STC.pure_ | STC.nogc, fs.func);
+        if (tfld)
+        {
+            stc |= ModToStc(tfld.mod);
+        }
         auto tf = new TypeFunction(ParameterList(params), Type.tint32, LINK.d, stc);
+        tf = cast(TypeFunction)tf.addStorageClass(stc);
+        assert(!!tf);
         fs.cases = new Statements();
         fs.gotos = new ScopeStatements();
         auto fld = new FuncLiteralDeclaration(fs.loc, fs.endloc, tf, TOK.delegate_, fs);
