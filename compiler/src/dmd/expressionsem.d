@@ -4506,7 +4506,8 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
 
     override void visit(TupleLiteralExp e)
     {
-        assert(0, "TODO");
+        result = new CallExp(e.loc, new DotIdExp(e.loc, new DotIdExp(e.loc, new IdentifierExp(e.loc, Id.std), Id.typecons), Id.tuple), e.elements);
+        result = result.expressionSemantic(sc);
     }
 
     override void visit(ArrayLiteralExp e)
