@@ -1685,7 +1685,7 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
             stc |= ModToStc(tfld.mod);
         }
         auto tf = new TypeFunction(ParameterList(params), Type.tint32, LINK.d, stc);
-        tf = cast(TypeFunction)tf.addStorageClass(stc);
+        tf = tf.addStorageClass(stc).isTypeFunction();
         assert(!!tf);
         fs.cases = new Statements();
         fs.gotos = new ScopeStatements();
