@@ -2441,7 +2441,15 @@ private void expressionPrettyPrint(Expression e, ref OutBuffer buf, ref HdrGenSt
         buf.put('"');
         if (e.postfix)
             buf.put(e.postfix);
+    }
 
+    void visitTupleLiteral(TupleLiteralExp e)
+    {
+        buf.writeByte('(');
+        argsToBuffer(e.elements, buf, hgs, null);
+        if (e.elements.length == 1)
+            buf.writeByte(',');
+        buf.writeByte(')');
     }
 
     void visitArrayLiteral(ArrayLiteralExp e)
@@ -3095,6 +3103,7 @@ private void expressionPrettyPrint(Expression e, ref OutBuffer buf, ref HdrGenSt
         case EXP.null_:         return visitNull(e.isNullExp());
         case EXP.string_:       return visitString(e.isStringExp());
         case EXP.interpolated:  return visitInterpolation(e.isInterpExp());
+        case EXP.tupleLiteral:  return visitTupleLiteral(e.isTupleLiteralExp());
         case EXP.arrayLiteral:  return visitArrayLiteral(e.isArrayLiteralExp());
         case EXP.assocArrayLiteral:     return visitAssocArrayLiteral(e.isAssocArrayLiteralExp());
         case EXP.structLiteral: return visitStructLiteral(e.isStructLiteralExp());
@@ -4625,6 +4634,7 @@ string EXPtoString(EXP op)
         EXP.complex80 : "creal",
         EXP.null_ : "null",
         EXP.string_ : "string",
+        EXP.tupleLiteral : "tupleLiteral",
         EXP.arrayLiteral : "arrayliteral",
         EXP.assocArrayLiteral : "assocarrayliteral",
         EXP.classReference : "classreference",

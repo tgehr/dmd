@@ -368,6 +368,7 @@ extern (C++) abstract class Expression : ASTNode
         inout(StringExp)    isStringExp() { return op == EXP.string_ ? cast(typeof(return))this : null; }
         inout(InterpExp)    isInterpExp() { return op == EXP.interpolated ? cast(typeof(return))this : null; }
         inout(TupleExp)     isTupleExp() { return op == EXP.tuple ? cast(typeof(return))this : null; }
+        inout(TupleLiteralExp) isTupleLiteralExp() { return op == EXP.tupleLiteral ? cast(typeof(return))this : null; }
         inout(ArrayLiteralExp) isArrayLiteralExp() { return op == EXP.arrayLiteral ? cast(typeof(return))this : null; }
         inout(AssocArrayLiteralExp) isAssocArrayLiteralExp() { return op == EXP.assocArrayLiteral ? cast(typeof(return))this : null; }
         inout(StructLiteralExp) isStructLiteralExp() { return op == EXP.structLiteral ? cast(typeof(return))this : null; }
@@ -1346,6 +1347,45 @@ extern (C++) final class TupleExp : Expression
     }
 }
 
+/* **********************************************************
+ * ( e1, e2, e3, ... )
+ *
+ * ---
+ * auto t = (1,2,3);
+ * alias Tup = (int, float, string)
+ * ---
+ */
+
+extern (C++) final class TupleLiteralExp : Expression
+{
+    Expressions* elements;
+    extern (D) this(const ref Loc loc, Expressions* elements)
+    {
+        super(loc, EXP.tupleLiteral);
+        this.elements = elements;
+    }
+
+    override TupleLiteralExp syntaxCopy()
+    {
+        return new TupleLiteralExp(loc, arraySyntaxCopy(elements));
+    }
+
+    Expression getElement(size_t i)
+    {
+        return this[i];
+    }
+
+    Expression opIndex(size_t i)
+    {
+        return (*elements)[i];
+    }
+
+    override void accept(Visitor v)
+    {
+        v.visit(this);
+    }
+
+}
 /***********************************************************
  * [ e1, e2, e3, ... ]
  *
@@ -4236,6 +4276,7 @@ private immutable ubyte[EXP.max+1] expSize = [
     EXP.uadd: __traits(classInstanceSize, UAddExp),
     EXP.remove: __traits(classInstanceSize, RemoveExp),
     EXP.newAnonymousClass: __traits(classInstanceSize, NewAnonClassExp),
+    EXP.tupleLiteral: __traits(classInstanceSize, TupleLiteralExp),
     EXP.arrayLiteral: __traits(classInstanceSize, ArrayLiteralExp),
     EXP.assocArrayLiteral: __traits(classInstanceSize, AssocArrayLiteralExp),
     EXP.structLiteral: __traits(classInstanceSize, StructLiteralExp),
