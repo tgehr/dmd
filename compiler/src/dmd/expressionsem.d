@@ -4272,6 +4272,11 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
         result = exp;
     }
 
+    override void visit(TupleLiteralExp e)
+    {
+        assert(0, "TODO");
+    }
+
     override void visit(ArrayLiteralExp e)
     {
         static if (LOGSEMANTIC)
