@@ -504,6 +504,11 @@ Optional!bool toBool(Expression _this)
         return typeof(return)(r);
     }
 
+    static Optional!bool tupleLiteralToBool(TupleLiteralExp _this)
+    {
+        return typeof(return)(); // TODO: ok?
+    }
+
     static Optional!bool arrayLiteralToBool(ArrayLiteralExp _this)
     {
         size_t dim = _this.elements ? _this.elements.length : 0;
@@ -535,6 +540,7 @@ Optional!bool toBool(Expression _this)
         // Keep the old behaviour for this refactoring
         // Should probably match language spec instead and check for length
         case EXP.string_: return typeof(return)(true);
+        case EXP.tupleLiteral: return tupleLiteralToBool(_this.isTupleLiteralExp());
         case EXP.arrayLiteral: return arrayLiteralToBool(_this.isArrayLiteralExp());
         case EXP.assocArrayLiteral: return assocArrayLiteralToBool(_this.isAssocArrayLiteralExp());
         case EXP.symbolOffset: return typeof(return)(true);
@@ -951,6 +957,25 @@ bool equals(const Expression _this, const Expression e)
         return true;
     }
 
+    static bool tupleLiteralExpEquals(const TupleLiteralExp _this, const TupleLiteralExp e)
+    {
+        if (_this.elements.length != e.elements.length)
+            return false;
+        if (_this.elements.length == 0 && !_this.type.equals(e.type))
+        {
+            return false;
+        }
+
+        foreach (i, e1; *_this.elements)
+        {
+            auto e2 = (*e.elements)[i];
+
+            if (e1 != e2 && !e1.equals(e2))
+                return false;
+        }
+        return true;
+    }
+
     static bool arrayLiteralExpEquals(const ArrayLiteralExp _this, const ArrayLiteralExp e)
     {
         if (_this.elements.length != e.elements.length)
@@ -1044,6 +1069,7 @@ bool equals(const Expression _this, const Expression e)
         case EXP.null_: return nullExpEquals(_this.isNullExp(), e.isNullExp());
         case EXP.string_: return stringExpEquals(_this.isStringExp(), e.isStringExp());
         case EXP.tuple: return tupleExpEquals(_this.isTupleExp(), e.isTupleExp());
+        case EXP.tupleLiteral: return tupleLiteralExpEquals(_this.isTupleLiteralExp(), e.isTupleLiteralExp());
         case EXP.arrayLiteral: return arrayLiteralExpEquals(_this.isArrayLiteralExp(), e.isArrayLiteralExp());
         case EXP.assocArrayLiteral: return assocArrayLiteralExpEquals(_this.isAssocArrayLiteralExp(), e.isAssocArrayLiteralExp());
         case EXP.structLiteral: return structLiteralExpEquals(_this.isStructLiteralExp(), e.isStructLiteralExp());
@@ -6057,6 +6083,11 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
         exp.type = exp.type.typeSemantic(exp.loc, sc);
         //printf("-TupleExp::semantic(%s)\n", toChars());
         result = exp;
+    }
+
+    override void visit(TupleLiteralExp e)
+    {
+        assert(0, "TODO");
     }
 
     override void visit(ArrayLiteralExp e)
