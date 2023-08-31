@@ -317,6 +317,7 @@ enum EXP : ubyte
     uadd,
     remove,
     newAnonymousClass,
+    tupleLiteral,
     arrayLiteral,
     assocArrayLiteral,
     structLiteral,
