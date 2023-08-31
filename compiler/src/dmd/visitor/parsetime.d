@@ -187,6 +187,7 @@ public:
     void visit(AST.StringExp e) { visit(cast(AST.Expression)e); }
     void visit(AST.InterpExp e) { visit(cast(AST.Expression)e); }
     void visit(AST.NewExp e) { visit(cast(AST.Expression)e); }
+    void visit(AST.TupleLiteralExp e) { visit(cast(AST.Expression)e); }
     void visit(AST.AssocArrayLiteralExp e) { visit(cast(AST.Expression)e); }
     void visit(AST.ArrayLiteralExp e) { visit(cast(AST.Expression)e); }
     void visit(AST.MixinExp e) { visit(cast(AST.Expression)e); }

@@ -4395,7 +4395,19 @@ void resolve(Type mt, Loc loc, Scope* sc, out Expression pe, out Type pt, out Ds
 
     void visitTupleTy(TypeTupleTy tt)
     {
-        return visitType(tt);
+        auto expressions = new Expressions();
+        foreach (i; 0 .. tt.types.length) {
+            Expression pei;
+            Type pti;
+            Dsymbol psi;
+            resolve((*tt.types)[i], loc, sc, pei, pti, psi, intypeid);
+            if (!pei)
+            {
+                return visitType(tt);
+            }
+            expressions.push(pei);
+        }
+        return returnExp(new TupleLiteralExp(loc, expressions));
     }
 
     void visitMixin(TypeMixin mt)

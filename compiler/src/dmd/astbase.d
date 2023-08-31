@@ -4672,6 +4672,7 @@ struct ASTBase
             inout(StringExp)    isStringExp() { return op == EXP.string_ ? cast(typeof(return))this : null; }
             inout(InterpExp)    isInterpExp() { return op == EXP.interpolated ? cast(typeof(return))this : null; }
             inout(TupleExp)     isTupleExp() { return op == EXP.tuple ? cast(typeof(return))this : null; }
+            inout(TupleLiteralExp) isTupleLiteralExp() { return op == EXP.tupleLiteral ? cast(typeof(return))this : null; }
             inout(ArrayLiteralExp) isArrayLiteralExp() { return op == EXP.arrayLiteral ? cast(typeof(return))this : null; }
             inout(AssocArrayLiteralExp) isAssocArrayLiteralExp() { return op == EXP.assocArrayLiteral ? cast(typeof(return))this : null; }
             inout(TypeExp)      isTypeExp() { return op == EXP.type ? cast(typeof(return))this : null; }
@@ -5488,6 +5489,23 @@ struct ASTBase
             v.visit(this);
         }
     }
+
+
+    extern (C++) final class TupleLiteralExp : Expression
+    {
+        Expressions* elements;
+        extern (D) this(const ref Loc loc, Expressions* elements)
+        {
+            super(loc, EXP.tupleLiteral, __traits(classInstanceSize, TupleLiteralExp));
+            this.elements = elements;
+        }
+
+        override void accept(Visitor v)
+        {
+            v.visit(this);
+        }
+    }
+
 
     extern (C++) final class DollarExp : IdentifierExp
     {
