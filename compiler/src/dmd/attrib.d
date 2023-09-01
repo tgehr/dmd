@@ -815,6 +815,7 @@ extern (C++) final class UnpackDeclaration : AttribDeclaration
             {
                 assert(0);
             }
+            import dmd.errors;
             if (d_storage_class & STC.static_ && !(storage_class & STC.static_))
             {
                 dmd.errors.error(loc, "cannot specify `static` for individual components of an unpack declaration");
@@ -906,7 +907,7 @@ extern (C++) final class UnpackDeclaration : AttribDeclaration
         if (tup.isAliasThisTuple())
         {
             assert(decl.length != 0);
-            import dmd.sideeffect;
+            import dmd.sideeffect: copyToTemp;
             auto v = copyToTemp(storage_class, "__tup", tup);
             import dmd.dsymbolsem : dsymbolSemantic;
             v.dsymbolSemantic(sc);
