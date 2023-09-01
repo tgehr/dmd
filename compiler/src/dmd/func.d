@@ -2671,7 +2671,7 @@ extern (C++) class FuncDeclaration : Declaration
             auto fparams = new Parameters();
             if (canBuildResultVar())
             {
-                Parameter p = new Parameter(loc, STC.ref_ | STC.const_, f.nextOf(), Id.result, null, null);
+                Parameter p = new Parameter(loc, STC.ref_ | STC.const_, f.nextOf(), Id.result, null, null, null);
                 fparams.push(p);
             }
             auto fo = cast(TypeFunction)(originalType ? originalType : f);
