@@ -17546,7 +17546,7 @@ void lowerNonArrayAggregate(StaticForeach sfe, Scope* sc)
         foreach (params; pparams)
         {
             auto p = sfe.aggrfe ? (*sfe.aggrfe.parameters)[i] : sfe.rangefe.param;
-            params.push(new Parameter(aloc, p.storageClass, p.type, p.ident, null, null, p.unpack));
+            params.push(new Parameter(aloc, p.storageClass, p.type, p.ident, null, null, p.unpack ? p.unpack.syntaxCopy(null) : null));
         }
     }
     Expression[2] res;
