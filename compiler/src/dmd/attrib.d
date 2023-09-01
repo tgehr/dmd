@@ -1216,13 +1216,14 @@ extern (C++) final class UnpackDeclaration : AttribDeclaration
     bool onStack = false;
     bool lowered = false;
 
-    private bool propagateStorageClasses(Scope* sc)
+    bool propagateStorageClasses(Scope* sc)
     {
         foreach (d; *decl)
         {
             ulong d_storage_class;
             if (auto vd = d.isVarDeclaration())
             {
+                vd.storage_class |= storage_class;
                 d_storage_class = vd.storage_class;
             }
             else if (auto up = d.isUnpackDeclaration())
