@@ -1283,6 +1283,12 @@ extern (C++) final class UnpackDeclaration : AttribDeclaration
             return fail();
         }
 
+        if (storage_class & (STC.ref_ | STC.out_))
+        {
+            dmd.errors.error(loc, "cannot unpack by reference");
+            return fail();
+        }
+
         foreach (d; *decl)
         {
             ulong d_storage_class;
@@ -1306,6 +1312,11 @@ extern (C++) final class UnpackDeclaration : AttribDeclaration
             if (d_storage_class & STC.manifest && !(storage_class & STC.manifest))
             {
                 dmd.errors.error(loc, "cannot specify `enum` for individual components of an unpack declaration");
+                return fail();
+            }
+            if (d_storage_class & (STC.ref_ | STC.out_))
+            {
+                dmd.errors.error(loc, "cannot unpack by reference");
                 return fail();
             }
         }

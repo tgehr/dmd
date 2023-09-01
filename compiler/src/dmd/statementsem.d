@@ -952,6 +952,30 @@ Statement statementSemanticVisit(Statement s, Scope* sc)
             return loopReturn(e, fs.cases, loc);
         }
 
+        Statement unpackVariables(Statement _body)
+        {
+            Statements* ups = null;
+            foreach (i; 0 .. dim)
+            {
+                Parameter p = (*fs.parameters)[i];
+                if (p.unpack)
+                {
+                    if (ups is null)
+                    {
+                        ups = new Statements();
+                    }
+                    p.unpack._init = new IdentifierExp(p.loc, p.ident);
+                    ups.push(new ExpStatement(p.unpack.loc, p.unpack));
+                }
+            }
+            if (ups !is null)
+            {
+                ups.push(_body);
+                return new CompoundStatement(loc, ups);
+            }
+            return _body;
+        }
+
         switch (tab.ty)
         {
         case Tarray:
@@ -1166,6 +1190,8 @@ Statement statementSemanticVisit(Statement s, Scope* sc)
                 indexExp.indexIsInBounds = true; // disabling bounds checking in foreach statements.
                 fs.value._init = new ExpInitializer(loc, indexExp);
                 Statement ds = new ExpStatement(loc, fs.value);
+
+                fs._body = unpackVariables(fs._body);
 
                 if (dim == 2)
                 {
@@ -1386,6 +1412,7 @@ Statement statementSemanticVisit(Statement s, Scope* sc)
                 }
 
                 forbody = new CompoundStatement(loc, makeargs, fs._body);
+                forbody = unpackVariables(forbody);
 
                 Statement s = new ForStatement(loc, _init, condition, increment, forbody, fs.endloc);
                 if (auto ls = checkLabeledLoop(sc, fs))
@@ -1564,6 +1591,13 @@ Statement statementSemanticVisit(Statement s, Scope* sc)
             //increment = new AddAssignExp(loc, new VarExp(loc, fs.key), IntegerExp.literal!1);
             increment = new PreExp(EXP.prePlusPlus, loc, new VarExp(loc, fs.key));
         }
+
+        if (fs.prm.unpack !is null)
+        {
+            fs.prm.unpack._init = new IdentifierExp(fs.prm.loc, fs.prm.ident);
+            fs._body = new CompoundStatement(loc, new ExpStatement(fs.prm.unpack.loc, fs.prm.unpack), fs._body);
+        }
+
         if ((fs.prm.storageClass & STC.ref_) && fs.prm.type.equals(fs.key.type))
         {
             fs.key.range = null;
@@ -1593,6 +1627,7 @@ Statement statementSemanticVisit(Statement s, Scope* sc)
         }
 
         auto s = new ForStatement(loc, forinit, cond, increment, fs._body, fs.endloc);
+
         if (LabelStatement ls = checkLabeledLoop(sc, fs))
             ls.gotoTarget = s;
         result = s.statementSemantic(sc);
