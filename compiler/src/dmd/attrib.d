@@ -1402,7 +1402,7 @@ extern (C++) final class UnpackDeclaration : AttribDeclaration
 
     override UnpackDeclaration syntaxCopy(Dsymbol s)
     {
-        return new UnpackDeclaration(loc, Dsymbol.arraySyntaxCopy(decl), _init.syntaxCopy(), storage_class);
+        return new UnpackDeclaration(loc, Dsymbol.arraySyntaxCopy(decl), _init ? _init.syntaxCopy() : null, storage_class);
     }
 
     override const(char)* toChars() const
