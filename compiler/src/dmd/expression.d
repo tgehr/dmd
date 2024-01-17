@@ -1659,6 +1659,7 @@ extern (C++) final class NewExp : Expression
     CtorDeclaration member;     // constructor function
     bool onstack;               // allocate on stack
     bool thrownew;              // this NewExp is the expression of a ThrowStatement
+    bool trailingComma;         // trailing comma in argument list
 
     Expression lowering;        // lowered druntime hook: `_d_new{class,itemT}`
 
@@ -2398,6 +2399,7 @@ extern (C++) final class CallExp : UnaExp
     bool isUfcsRewrite;     /// the first argument was pushed in here by a UFCS rewrite
     bool fromOpOverload;    // set for operator overload method call
     bool fromOpAssignment;  // set when operator overload method call from assignment (2024 edition)
+    bool trailingComma;     /// trailing comma in argument list
     VarDeclaration vthis2;  // container for multi-context
     Expression loweredFrom; // set if this is the result of a lowering (not for opOverloads)
 
