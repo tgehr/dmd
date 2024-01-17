@@ -2795,7 +2795,7 @@ private Expression rewriteOpAssign(BinExp exp)
  * Returns:
  *     `true` when a semantic error occurred
  */
-private bool preFunctionParameters(Scope* sc, ArgumentList argumentList, const bool reportErrors = true)
+private bool preFunctionParameters(Scope* sc, ArgumentList argumentList, ref bool trailingComma, const bool reportErrors)
 {
     Expressions* exps = argumentList.arguments;
     if (!exps)
@@ -2839,6 +2839,26 @@ private bool preFunctionParameters(Scope* sc, ArgumentList argumentList, const b
             err = true;
         }
         (*exps)[i] = arg;
+    }
+
+    // resolve opArgs
+    if (!trailingComma && exps.length == 1)
+    {
+        auto arg = (*exps)[0];
+        if (arg && arg.type)
+        {
+            if (AggregateDeclaration ad = isAggregate(arg.type))
+            {
+                if (Dsymbol s = ad.search(Loc.initial, Id.opArgs))
+                {
+                    auto narg = dotIdSemanticProp(new DotIdExp(arg.loc, arg, Id.opArgs), sc, false);
+                    narg = resolveProperties(sc, narg);
+                    (*exps)[0] = narg;
+                    trailingComma = true;
+                    err |= preFunctionParameters(sc, argumentList, trailingComma, reportErrors);
+                }
+            }
+        }
     }
 
     return err;
@@ -4927,7 +4947,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
         {
             return setError();
         }
-        if (preFunctionParameters(sc, exp.argumentList))
+        if (preFunctionParameters(sc, exp.argumentList, exp.trailingComma, true))
         {
             return setError();
         }
@@ -5876,7 +5896,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
         if (FuncExp fe = exp.e1.isFuncExp())
         {
             if (arrayExpressionSemantic(exp.arguments.peekSlice(), sc) ||
-                preFunctionParameters(sc, exp.argumentList))
+                preFunctionParameters(sc, exp.argumentList, exp.trailingComma, true))
                 return setError();
 
             // Run e1 semantic even if arguments have any errors
@@ -6116,7 +6136,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
             return;
         }
         if (arrayExpressionSemantic(exp.arguments.peekSlice(), sc) ||
-            preFunctionParameters(sc, exp.argumentList))
+            preFunctionParameters(sc, exp.argumentList, exp.trailingComma, true))
             return setError();
 
         // Check for call operator overload

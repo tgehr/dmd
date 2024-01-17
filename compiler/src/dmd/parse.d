@@ -403,7 +403,8 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                                 goto Ldeclaration;
                             // mixin(string)
                             nextToken();
-                            auto exps = parseArguments();
+                            bool trailingComma;
+                            auto exps = parseArguments(trailingComma);
                             check(TOK.semicolon);
                             s = new AST.MixinDeclaration(loc, exps);
                             break;
@@ -802,7 +803,8 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                     if (peekNext() == TOK.rightBracket)
                         error("empty attribute list is not allowed");
                     error("use `@(attributes)` instead of `[attributes]`");
-                    AST.Expressions* exps = parseArguments();
+                    bool trailingComma;
+                    AST.Expressions* exps = parseArguments(trailingComma);
                     // no redundant/conflicting check for UDAs
 
                     pAttrs.udas = AST.UserAttributeDeclaration.concat(pAttrs.udas, exps);
@@ -1002,7 +1004,10 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                     Identifier ident = token.ident;
                     nextToken();
                     if (token.value == TOK.comma && peekNext() != TOK.rightParenthesis)
-                        args = parseArguments(); // pragma(identifier, args...)
+                    {
+                        bool trailingComma;
+                        args = parseArguments(trailingComma); // pragma(identifier, args...)
+                    }
                     else
                         check(TOK.rightParenthesis); // pragma(identifier)
 
@@ -1468,8 +1473,11 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 const loc = token.loc;
                 AST.Expressions* args = new AST.Expressions();
                 AST.Identifiers* names = new AST.Identifiers();
-                parseNamedArguments(args, names);
-                exp = new AST.CallExp(loc, exp, args, names);
+                bool trailingComma;
+                parseNamedArguments(args, names, trailingComma);
+                auto call = new AST.CallExp(loc, exp, args, names);
+                call.trailingComma = trailingComma;
+                exp = call;
             }
 
             if (udas is null)
@@ -2234,7 +2242,10 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 nextToken(); // consume `)`
             }
             else
-                msg = parseArguments();
+            {
+                bool trailingComma;
+                msg = parseArguments(trailingComma);
+            }
         }
         else
             check(TOK.rightParenthesis);
@@ -3939,7 +3950,8 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
             nextToken();
             if (token.value != TOK.leftParenthesis)
                 error(token.loc, "found `%s` when expecting `%s` following `mixin`", token.toChars(), Token.toChars(TOK.leftParenthesis));
-            auto exps = parseArguments();
+            bool trailingComma;
+            auto exps = parseArguments(trailingComma);
             t = new AST.TypeMixin(loc, exps);
             break;
 
@@ -6600,7 +6612,10 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 ident = token.ident;
                 nextToken();
                 if (token.value == TOK.comma && peekNext() != TOK.rightParenthesis)
-                    args = parseArguments(); // pragma(identifier, args...);
+                {
+                    bool trailingComma;
+                    args = parseArguments(trailingComma); // pragma(identifier, args...);
+                }
                 else
                     check(TOK.rightParenthesis); // pragma(identifier);
                 if (token.value == TOK.semicolon)
@@ -8646,7 +8661,11 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
             if (token.value == TOK.leftParenthesis)
             {
                 e = new AST.TypeExp(loc, t);
-                e = new AST.CallExp(loc, e, parseArguments());
+                bool trailingComma;
+                auto args = parseArguments(trailingComma);
+                auto call = new AST.CallExp(loc, e, args);
+                call.trailingComma = trailingComma;
+                e = call;
                 break;
             }
             check(TOK.dot);
@@ -8798,7 +8817,8 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 nextToken();
                 if (token.value != TOK.leftParenthesis)
                     error(token.loc, "found `%s` when expecting `%s` following `mixin`", token.toChars(), Token.toChars(TOK.leftParenthesis));
-                auto exps = parseArguments();
+                bool trailingComma;
+                auto exps = parseArguments(trailingComma);
                 e = new AST.MixinExp(loc, exps);
                 break;
             }
@@ -9110,7 +9130,11 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                             t.toChars(), token.toChars());
                         return e;
                     }
-                    e = new AST.CallExp(loc, e, parseArguments());
+                    bool trailingComma;
+                    auto args = parseArguments(trailingComma);
+                    auto call = new AST.CallExp(loc, e, args);
+                    call.trailingComma = trailingComma;
+                    e = call;
                 }
                 break;
             }
@@ -9314,8 +9338,11 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
             case TOK.leftParenthesis:
                 AST.Expressions* args = new AST.Expressions();
                 AST.Identifiers* names = new AST.Identifiers();
-                parseNamedArguments(args, names);
-                e = new AST.CallExp(loc, e, args, names);
+                bool trailingComma;
+                parseNamedArguments(args, names, trailingComma);
+                auto call = new AST.CallExp(loc, e, args, names);
+                call.trailingComma = trailingComma;
+                e = call;
                 continue;
 
             case TOK.leftBracket:
@@ -9747,11 +9774,11 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
      * Collect argument list.
      * Assume current token is ',', '$(LPAREN)' or '['.
      */
-    private AST.Expressions* parseArguments()
+    private AST.Expressions* parseArguments(out bool trailingComma)
     {
         // function call
         AST.Expressions* arguments = new AST.Expressions();
-        parseNamedArguments(arguments, null);
+        parseNamedArguments(arguments, null, trailingComma);
         return arguments;
     }
 
@@ -9759,7 +9786,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
      * Collect argument list.
      * Assume current token is ',', '$(LPAREN)' or '['.
      */
-    private void parseNamedArguments(AST.Expressions* arguments, AST.Identifiers* names)
+    private void parseNamedArguments(AST.Expressions* arguments, AST.Identifiers* names, out bool trailingComma)
     {
         assert(arguments);
 
@@ -9769,6 +9796,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
 
         while (token.value != endtok && token.value != TOK.endOfFile)
         {
+            trailingComma = false;
             if (peekNext() == TOK.colon)
             {
                 // Named argument `name: exp`
@@ -9794,6 +9822,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 break;
 
             nextToken(); //comma
+            trailingComma = true;
         }
         check(endtok);
     }
@@ -9816,7 +9845,8 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
             {
                 arguments = new AST.Expressions();
                 names = new AST.Identifiers();
-                parseNamedArguments(arguments, names);
+                bool trailingComma;
+                parseNamedArguments(arguments, names, trailingComma);
             }
 
             AST.BaseClasses* baseclasses = null;
@@ -9848,6 +9878,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
         auto t = parseBasicType(true);
         t = parseTypeSuffixes(t);
         t = t.addSTC(stc);
+        bool trailingComma = false;
         if (t.ty == Taarray)
         {
             AST.TypeAArray taa = cast(AST.TypeAArray)t;
@@ -9861,10 +9892,11 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
         {
             arguments = new AST.Expressions();
             names = new AST.Identifiers();
-            parseNamedArguments(arguments, names);
+            parseNamedArguments(arguments, names, trailingComma);
         }
 
         auto e = new AST.NewExp(loc, thisexp, t, arguments, names);
+        e.trailingComma = trailingComma;
         return e;
     }
 
