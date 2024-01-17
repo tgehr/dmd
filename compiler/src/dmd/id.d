@@ -243,6 +243,10 @@ immutable Msgtable[] msgtable =
     { "opOpAssign" },
     { "opIndexOpAssign" },
     { "opSliceOpAssign" },
+    { "pow", "opPow" },
+    { "pow_r", "opPow_r" },
+    { "powass", "opPowAssign" },
+    { "opArgs" },
 
     { "classNew", "new" },
     { "classDelete", "delete" },
