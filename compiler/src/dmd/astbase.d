@@ -5111,6 +5111,7 @@ struct ASTBase
         Expressions* arguments;     // Array of Expression's
         Identifiers* names;         // Array of names corresponding to expressions
         Expression placement;       // if != null, then PlacementExpression
+        bool trailingComma;         // trailing comma in argument list
 
         extern (D) this(Loc loc, Expression placement, Expression thisexp, Type newtype, Expressions* arguments, Identifiers* names = null)
         {
@@ -5685,6 +5686,7 @@ struct ASTBase
     {
         Expressions* arguments;
         Identifiers* names;
+        bool trailingComma;     /// trailing comma in argument list
 
         extern (D) this(Loc loc, Expression e, Expressions* exps, Identifiers* names = null)
         {
