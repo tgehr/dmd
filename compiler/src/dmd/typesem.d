@@ -3020,10 +3020,12 @@ Type typeSemantic(Type type, Loc loc, Scope* sc)
             //(*mtype.types)[i] = (*mtype.types)[i].typeSemantic(loc, sc);
             tiargs.push((*mtype.types)[i]);
         }
-        auto tempinst = new TemplateInstance(loc, Id.Tuple, tiargs);
-        TypeQualified tq = new TypeIdentifier(loc, Id.std);
-        tq.addIdent(Id.typecons);
-        tq.addInst(tempinst);
+        // imported!"std.typecons".Tuple!Types
+        auto moduleNameArgs = new Objects();
+        moduleNameArgs.push(new StringExp(loc, "std.typecons"));
+        auto tempinst = new TemplateInstance(loc, Id.imported, moduleNameArgs);
+        TypeQualified tq = new TypeInstance(loc, tempinst);
+        tq.addInst(new TemplateInstance(loc, Id.Tuple, tiargs));
         return tq.typeSemantic(loc, sc);
     }
 
