@@ -4,11 +4,9 @@ struct S1 { int v; }
 struct S2 { int* p; }
 class C { int v; }
 
-#line 6
 /*
 TEST_OUTPUT:
 ---
-fail_compilation/fail13902.d(45): Error: using the result of a comma expression is not allowed
 fail_compilation/fail13902.d(32): Error: returning `& x` escapes a reference to local variable `x`
 fail_compilation/fail13902.d(33): Error: returning `&s1.v` escapes a reference to local variable `s1`
 fail_compilation/fail13902.d(38): Error: returning `& sa1` escapes a reference to local variable `sa1`
@@ -16,7 +14,7 @@ fail_compilation/fail13902.d(39): Error: returning `& sa2` escapes a reference t
 fail_compilation/fail13902.d(40): Error: returning `& x` escapes a reference to local variable `x`
 fail_compilation/fail13902.d(41): Error: returning `(& x + 4)` escapes a reference to local variable `x`
 fail_compilation/fail13902.d(42): Error: returning `& x + cast(long)x * 4L` escapes a reference to local variable `x`
-fail_compilation/fail13902.d(45): Error: returning `& y` escapes a reference to local variable `y`
+fail_compilation/fail13902.d(45): Error: return value `tuple(& x, & y)` of type `Tuple!(int*, int*)` does not match return type `int*`, and cannot be implicitly converted
 ---
 */
 int* testEscape1()
@@ -44,16 +42,15 @@ int* testEscape1()
     if (0) return &x + x;
   //if (0) return ptr += &x + 1;    // semantic error
     if (0)        ptr -= &x - &y;   // no error
-    if (0) return (&x, &y);         // CommaExp
+    if (0) return (&x, &y);         // semantic error
 
     return null;    // ok
 }
 
-#line 49
+#line 50
 /*
 TEST_OUTPUT:
 ---
-fail_compilation/fail13902.d(88): Error: using the result of a comma expression is not allowed
 fail_compilation/fail13902.d(75): Error: returning `& x` escapes a reference to parameter `x`
 fail_compilation/fail13902.d(76): Error: returning `&s1.v` escapes a reference to parameter `s1`
 fail_compilation/fail13902.d(81): Error: returning `& sa1` escapes a reference to parameter `sa1`
@@ -61,7 +58,7 @@ fail_compilation/fail13902.d(82): Error: returning `& sa2` escapes a reference t
 fail_compilation/fail13902.d(83): Error: returning `& x` escapes a reference to parameter `x`
 fail_compilation/fail13902.d(84): Error: returning `(& x + 4)` escapes a reference to parameter `x`
 fail_compilation/fail13902.d(85): Error: returning `& x + cast(long)x * 4L` escapes a reference to parameter `x`
-fail_compilation/fail13902.d(88): Error: returning `& y` escapes a reference to parameter `y`
+fail_compilation/fail13902.d(88): Error: return value `tuple(& x, & y)` of type `Tuple!(int*, int*)` does not match return type `int*`, and cannot be implicitly converted
 ---
 */
 int* testEscape2(
@@ -89,7 +86,7 @@ int* testEscape2(
     if (0) return  &x + x;
   //if (0) return ptr += &x + 1;    // semantic error
     if (0)        ptr -= &x - &y;   // no error
-    if (0) return (&x, &y);         // CommaExp
+    if (0) return (&x, &y);         // semantic error
 
     return null;    // ok
 }
@@ -98,7 +95,7 @@ int* testEscape2(
 /*
 TEST_OUTPUT:
 ---
-fail_compilation/fail13902.d(123): Error: using the result of a comma expression is not allowed
+fail_compilation/fail13902.d(123): Error: return value `tuple(&x, &y)` of type `Tuple!(int*, int*)` does not match return type `int*`, and cannot be implicitly converted
 ---
 */
 int* testEscape3(
@@ -126,7 +123,7 @@ int* testEscape3(
     if (0) return ptr = &x + x;
   //if (0) return ptr += &x + 1;    // semantic error
     if (0) return ptr -= &x - &y;   // no error
-    if (0) return (&x, &y);         // CommaExp
+    if (0) return (&x, &y);         // semantic error
 
     return null;    // ok
 }

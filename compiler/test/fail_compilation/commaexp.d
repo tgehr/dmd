@@ -1,19 +1,19 @@
 /* REQUIRED_ARGS: -o-
 TEST_OUTPUT:
 ---
-fail_compilation/commaexp.d(27): Error: using the result of a comma expression is not allowed
-fail_compilation/commaexp.d(39): Error: using the result of a comma expression is not allowed
+fail_compilation/commaexp.d(39): Error: incompatible types for `(i) += (tuple(i++, 1))`: `ulong` and `Tuple!(ulong, int)`
 fail_compilation/commaexp.d(40): Error: using the result of a comma expression is not allowed
-fail_compilation/commaexp.d(41): Error: using the result of a comma expression is not allowed
-fail_compilation/commaexp.d(42): Error: using the result of a comma expression is not allowed
-fail_compilation/commaexp.d(44): Error: using the result of a comma expression is not allowed
+fail_compilation/commaexp.d(41): Error: cannot implicitly convert expression `tuple(ok = true, null)` of type `Tuple!(bool, typeof(null))` to `object.Object`
+fail_compilation/commaexp.d(42): Error: cannot implicitly convert expression `tuple(true, mc.append(new Entry))` of type `Tuple!(bool, bool)` to `bool`
+fail_compilation/commaexp.d(44): Error: cannot implicitly convert expression `tuple(true, false)` of type `Tuple!(bool, bool)` to `bool`
 fail_compilation/commaexp.d(45): Error: using the result of a comma expression is not allowed
 fail_compilation/commaexp.d(56): Error: using the result of a comma expression is not allowed
 fail_compilation/commaexp.d(69): Error: using the result of a comma expression is not allowed
-fail_compilation/commaexp.d(81): Error: using the result of a comma expression is not allowed
+fail_compilation/commaexp.d(81): Error: function `bar11` is not callable using argument types `(Tuple!(int, int*), int*)`
+fail_compilation/commaexp.d(81):        cannot pass argument `tuple(i, p)` of type `Tuple!(int, int*)` to parameter `int* __param_0`
+fail_compilation/commaexp.d(75):        `commaexp.bar11(int* __param_0, int* __param_1)` declared here
 ---
 */
-
 class Entry {}
 class MyContainerClass { bool append (Entry) { return false; } }
 
@@ -24,7 +24,7 @@ int main () {
 
     // https://issues.dlang.org/show_bug.cgi?id=15997
     enum WINHTTP_ERROR_BASE = 4200;
-    enum ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED = (WINHTTP_ERROR_BASE, + 44);
+    enum ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED = (WINHTTP_ERROR_BASE, + 44); // OK, tuple
 
     // OK
     for (size_t i; i < 5; ++i, i += 1) {}
@@ -35,7 +35,7 @@ int main () {
     ok = true, mc.append(new Entry);
     assert(ok);
 
-    // NOPE
+    // NOPE - the bracketed CommaExps are tuple type mismatches
     for (size_t i; i < 5; ++i, i += (i++, 1)) {}
     for (; aggr++, aggr > 5;) {}
     if (Object o = (ok = true, null)) {}
@@ -78,5 +78,5 @@ void test11()
 {
     static int* p;
     static int i;
-    bar11((i,p), &i);
+    bar11((i,p), &i); // tuple type mismatch
 }
