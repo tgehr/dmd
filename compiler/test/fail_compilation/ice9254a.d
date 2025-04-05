@@ -1,12 +1,7 @@
 /*
 TEST_OUTPUT:
 ---
-fail_compilation/ice9254a.d(15): Error: using the result of a comma expression is not allowed
-fail_compilation/ice9254a.d(15): Error: using the result of a comma expression is not allowed
-fail_compilation/ice9254a.d(15): Error: using the result of a comma expression is not allowed
-fail_compilation/ice9254a.d(15): Error: using the result of a comma expression is not allowed
-fail_compilation/ice9254a.d(15): Error: using the result of a comma expression is not allowed
-fail_compilation/ice9254a.d(15): Error: invalid `foreach` aggregate `false` of type `bool`
+fail_compilation/ice9254a.d(10): Error: expression `tuple(2, 3, 4, 8, 7, 9)` of type `(int, int, int, int, int, int)` does not have a boolean value
 ---
 */
 
