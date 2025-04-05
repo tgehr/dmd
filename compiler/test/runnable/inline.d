@@ -1003,7 +1003,7 @@ void test15296()
 
     // CommaExp at the top of ExpStatement
     x15296 = 0;
-    (s.foo(0, 0), voidCall15296());
+    s.foo(0, 0), voidCall15296();
     assert(x15296 == 3 + 2);
 }
 
