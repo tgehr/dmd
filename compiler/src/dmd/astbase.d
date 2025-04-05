@@ -4580,6 +4580,16 @@ struct ASTBase
         }
     }
 
+    extern (C++) final class TypeTupleTy : Type
+    {
+        Types* types;
+        extern (D) this(Types* types)
+        {
+            super(TtupleTy);
+            this.types = types;
+        }
+    }
+
     extern (C++) abstract class Expression : ASTNode
     {
         EXP op;
@@ -5067,6 +5077,7 @@ struct ASTBase
         Expressions* arguments;     // Array of Expression's
         Identifiers* names;         // Array of names corresponding to expressions
         Expression placement;       // if != null, then PlacementExpression
+        bool trailingComma;         // trailing comma in argument list
 
         extern (D) this(Loc loc, Expression placement, Expression thisexp, Type newtype, Expressions* arguments, Identifiers* names = null)
         {
@@ -5641,6 +5652,7 @@ struct ASTBase
     {
         Expressions* arguments;
         Identifiers* names;
+        bool trailingComma;         // trailing comma in argument list
 
         extern (D) this(Loc loc, Expression e, Expressions* exps, Identifiers* names = null)
         {
