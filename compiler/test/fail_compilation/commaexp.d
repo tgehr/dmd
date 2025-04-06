@@ -1,7 +1,7 @@
 /* REQUIRED_ARGS: -o-
 TEST_OUTPUT:
 ---
-fail_compilation/commaexp.d(39): Error: incompatible types for `(i) += (tuple(i++, 1))`: `ulong` and `Tuple!(ulong, int)`
+fail_compilation/commaexp.d(39): Error: incompatible types for `(i) += (tuple(i++, 1))`: `$?:32=uint|64=ulong$` and `Tuple!($?:32=uint|64=ulong$, int)`
 fail_compilation/commaexp.d(40): Error: using the result of a comma expression is not allowed
 fail_compilation/commaexp.d(41): Error: cannot implicitly convert expression `tuple(ok = true, null)` of type `Tuple!(bool, typeof(null))` to `object.Object`
 fail_compilation/commaexp.d(42): Error: cannot implicitly convert expression `tuple(true, mc.append(new Entry))` of type `Tuple!(bool, bool)` to `bool`
