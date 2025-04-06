@@ -37,6 +37,16 @@ void main()
     assert(t[0] == 8);
     assert(t[1] == '9');
 
+    // foreach unpacking
+    auto tc = (0, "");
+    foreach ((i, s); [(1, "one"), (2, "two")])
+    {
+        tc[0] += i;
+        tc[1] ~= s;
+    }
+    assert(tc[0] == 3);
+    assert(tc[1] == "onetwo");
+
     // ensure no explicit import needed
     static assert(!__traits(compiles, std.typecons));
 }
