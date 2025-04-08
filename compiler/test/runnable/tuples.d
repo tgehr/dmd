@@ -6,6 +6,10 @@ void main()
     assert(tup[0] == 4);
     assert(tup[1] == 5);
 
+    auto st = ("one",);
+    assert(st[0] == "one");
+    assert(st.length == 1);
+
     // unpacking
     auto (x, const y, z) = (1, 2L, "three");
     static assert(is(typeof(x) == int));
