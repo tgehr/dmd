@@ -51,6 +51,15 @@ void main()
     assert(tc[0] == 3);
     assert(tc[1] == "onetwo");
 
+    // parameter unpacking
+    // TODO
+    //int foo((int x, int y), int z) => [x, y, z];
+    alias foo = ((int x, int y), int z) => [x, y, z];
+    assert(foo((1, 2), 3) == [1, 2, 3]);
+
+    alias dg = (x, (y, z)) => [x, y, z];
+    assert(dg(1, (2, 3)) == [1, 2, 3]);
+
     // ensure no explicit import needed
     static assert(!__traits(compiles, std.typecons));
 }
