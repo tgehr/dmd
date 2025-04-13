@@ -18,6 +18,7 @@ import core.stdc.string;
 
 import dmd.astenums;
 import dmd.errorsink;
+import dmd.globals;
 import dmd.id;
 import dmd.identifier;
 import dmd.lexer;
@@ -1174,7 +1175,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 error("linkage specification not allowed within unpack declarations");+/
             if (udas) // TODO
                 error("user defined attributes not allowed within unpack declarations");
-            if (token.value == TOK.leftParenthesis)
+            if (global.params.tuples && token.value == TOK.leftParenthesis)
             {
                 vars.push(parseUnpackDeclaration(storage_class, false, isParameter));
             }
@@ -1261,7 +1262,8 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
         {
             const loc = token.loc;
             AST.Dsymbol s;
-            if (token.value == TOK.leftParenthesis && peekPastParen(&token).value == TOK.assign)
+            if (global.params.tuples && token.value == TOK.leftParenthesis &&
+                peekPastParen(&token).value == TOK.assign)
             {
                 s = parseUnpackDeclaration(storageClass);
             }
@@ -3126,7 +3128,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                             goto LskipType;
                         }
 
-                        if (tpl && token.value == TOK.leftParenthesis)
+                        if (global.params.tuples && tpl && token.value == TOK.leftParenthesis)
                         {
                             const tv2 = peekPastParen(&token).value;
                             if (tv2 == TOK.comma || tv2 == TOK.rightParenthesis || tv2 == TOK.dotDotDot)
@@ -5786,7 +5788,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                     goto Larg;
                 }
             }
-            else if (token.value == TOK.leftParenthesis)
+            else if (global.params.tuples && token.value == TOK.leftParenthesis)
             {
                 TOK after = peekPastParen(&token).value;
                 if (after == TOK.comma || after == TOK.semicolon)
