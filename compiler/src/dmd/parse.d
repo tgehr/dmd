@@ -18,6 +18,7 @@ import core.stdc.string;
 
 import dmd.astenums;
 import dmd.errorsink;
+import dmd.globals;
 import dmd.id;
 import dmd.identifier;
 import dmd.lexer;
@@ -322,7 +323,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
         auto next = peek(t);
         if (next.value != TOK.leftParenthesis)
             return false;
-        if (isTupleNotation(next))
+        if (global.params.tuples && isTupleNotation(next))
             return false;
         return true;
     }
@@ -828,7 +829,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 {
                     auto next = peek(&token);
                     if (next.value != TOK.leftParenthesis ||
-                        peekPastParen(next).value == TOK.assign)
+                        global.params.tuples && peekPastParen(next).value == TOK.assign)
                     {
                         stc = STC.extern_;
                         goto Lstc;
@@ -1080,7 +1081,8 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 continue;
 
             case TOK.leftParenthesis:
-                if (peekPastParen(&token).value == TOK.assign) // (confirm unpacking for better error messages)
+                // confirm unpacking for better error messages:
+                if (global.params.tuples && peekPastParen(&token).value == TOK.assign)
                     goto Ldeclaration;
                 goto default;
 
@@ -1189,7 +1191,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 error("linkage specification not allowed within unpack declarations");+/
             if (udas) // TODO
                 error("user defined attributes not allowed within unpack declarations");
-            if (token.value == TOK.leftParenthesis)
+            if (global.params.tuples && token.value == TOK.leftParenthesis)
             {
                 vars.push(parseUnpackDeclaration(storage_class, false, isParameter));
             }
@@ -1276,7 +1278,8 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
         {
             const loc = token.loc;
             AST.Dsymbol s;
-            if (token.value == TOK.leftParenthesis && peekPastParen(&token).value == TOK.assign)
+            if (global.params.tuples && token.value == TOK.leftParenthesis &&
+                peekPastParen(&token).value == TOK.assign)
             {
                 s = parseUnpackDeclaration(storageClass);
             }
@@ -3205,7 +3208,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                             goto LskipType;
                         }
 
-                        if (tpl && token.value == TOK.leftParenthesis)
+                        if (global.params.tuples && tpl && token.value == TOK.leftParenthesis)
                         {
                             const tv2 = peekPastParen(&token).value;
                             if (tv2 == TOK.comma || tv2 == TOK.rightParenthesis || tv2 == TOK.dotDotDot)
@@ -4595,7 +4598,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 {
                     auto next = peek(&token);
                     if (next.value != TOK.leftParenthesis ||
-                        peekPastParen(next).value == TOK.assign)
+                        global.params.tuples && peekPastParen(next).value == TOK.assign)
                     {
                         stc = STC.extern_;
                         goto L1;
@@ -5873,7 +5876,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                     goto Larg;
                 }
             }
-            else if (token.value == TOK.leftParenthesis)
+            else if (global.params.tuples && token.value == TOK.leftParenthesis)
             {
                 TOK after = peekPastParen(&token).value;
                 if (after == TOK.comma || after == TOK.semicolon)
@@ -6581,7 +6584,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
         case TOK.scope_:
             auto next = peek(&token);
             if (next.value != TOK.leftParenthesis ||
-                peekPastParen(next).value == TOK.assign)
+                global.params.tuples && peekPastParen(next).value == TOK.assign)
                 goto Ldeclaration; // scope used as storage class
             nextToken();
             check(TOK.leftParenthesis);
