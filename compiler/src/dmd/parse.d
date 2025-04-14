@@ -1203,7 +1203,8 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
 
                     if (token.value != TOK.identifier)
                     {
-                        error("expected identifier in unpack declaration");
+                        error("expected identifier after type `%s` in unpack declaration",
+                            t.toChars());
                         break;
                     }
                     i = token.ident;
