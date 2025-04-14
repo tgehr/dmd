@@ -1,3 +1,7 @@
+/*
+REQUIRED_ARGS: -preview=tuples
+*/
+
 void main()
 {
     // literal
