@@ -1176,8 +1176,9 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                 error("linkage specification not allowed within unpack declarations");+/
             if (udas) // TODO
                 error("user defined attributes not allowed within unpack declarations");
-            if (global.params.tuples && token.value == TOK.leftParenthesis)
+            if (token.value == TOK.leftParenthesis)
             {
+                // recurse
                 vars.push(parseUnpackDeclaration(storage_class, false, isParameter));
             }
             else
