@@ -865,8 +865,8 @@ extern (C++) final class UnpackDeclaration : AttribDeclaration
             return fail();
         }
 
-        TypeTuple typ = null;
         TupleExp tup = null;
+        auto tinit = _init.type;
 
         import dmd.tokens: EXP;
         if (_init.type.ty == Ttuple && _init.op == EXP.tuple)
@@ -886,7 +886,8 @@ extern (C++) final class UnpackDeclaration : AttribDeclaration
         static import dmd.errors;
         if (!tup)
         {
-            dmd.errors.error(loc, "right hand side of unpack declaration must be a tuple or expression sequence");
+            dmd.errors.error(loc, "right hand side of unpack declaration must resolve to a tuple or expression sequence, not `%s`",
+                tinit.toChars());
             return fail();
         }
         if (decl.length != tup.exps.length)
