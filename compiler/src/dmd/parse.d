@@ -1242,7 +1242,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
         AST.Expression _init = null;
         if (parseInitializer)
         {
-            check(TOK.assign);
+            check(TOK.assign, "unpack declaration");
             _init = parseAssignExp();
         }
         return new AST.UnpackDeclaration(unpackLoc, vars, _init, g_storage_class);
@@ -1264,10 +1264,10 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
         {
             const loc = token.loc;
             AST.Dsymbol s;
-            if (global.params.tuples && token.value == TOK.leftParenthesis &&
-                peekPastParen(&token).value == TOK.assign)
+            if (token.value == TOK.leftParenthesis)
             {
-                s = parseUnpackDeclaration(storageClass);
+                assert(global.params.tuples);
+                s = parseUnpackDeclaration(storageClass, true);
             }
             else
             {
