@@ -45,6 +45,16 @@ void main()
     assert(t[0] == 8);
     assert(t[1] == '9');
 
+    (int,) t2;
+    static assert(t2.length == 1);
+    static assert(is(typeof(t2[0]) == int));
+    t2 = (5,);
+    assert(t2[0] == 5);
+
+    () t3 = ();
+    t3 = ();
+    static assert(t3.length == 0);
+
     // foreach unpacking
     auto tc = (0, "");
     foreach ((i, s); [(1, "one"), (2, "two")])
