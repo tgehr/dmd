@@ -20,6 +20,6 @@ void main()
     (int a, (b, c)) = tuple(1, tuple("2", 3.0)); // error
     (int a, (auto b, c)) = tuple(1, tuple("2", 3.0)); // error
 
-    auto (a, b), c = t;
-    (int a, int b), c = t;
+    auto (a, b), c = t; // error
+    (int a, int b), c = t; // error
 }
