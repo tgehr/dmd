@@ -8948,8 +8948,11 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                                 break;
                             check(TOK.comma);
                         }
-                        e = new AST.TupleLiteralExp(loc, elements);
                         check(loc, TOK.rightParenthesis);
+                        if (token.value == TOK.assign)
+                            e = new AST.TupleExp(loc, elements);
+                        else
+                            e = new AST.TupleLiteralExp(loc, elements);
                         break;
                     }
                 }
