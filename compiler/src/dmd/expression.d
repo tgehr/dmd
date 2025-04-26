@@ -728,6 +728,7 @@ extern (C++) abstract class Expression : ASTNode
         inout(ObjcClassReferenceExp) isObjcClassReferenceExp() { return op == EXP.objcClassReference ? cast(typeof(return))this : null; }
         inout(ClassReferenceExp) isClassReferenceExp() { return op == EXP.classReference ? cast(typeof(return))this : null; }
         inout(ThrownExceptionExp) isThrownExceptionExp() { return op == EXP.thrownException ? cast(typeof(return))this : null; }
+        inout(UnpackExp) isUnpackExp() { return op == EXP.unpack ? cast(typeof(return))this : null; }
 
         inout(UnaExp) isUnaExp() pure inout nothrow @nogc
         {
@@ -2828,6 +2829,36 @@ extern (C++) final class DeclarationExp : Expression
             return !(vd.storage_class & (STC.manifest | STC.static_));
         }
         return false;
+    }
+
+    override void accept(Visitor v)
+    {
+        v.visit(this);
+    }
+}
+
+/**
+ * `(x, auto y) = expressionSeq`
+ *
+ * Note: Not allowed as a general expression because it can introduce variable declarations.
+ */
+extern (C++) final class UnpackExp : Expression
+{
+    // some can be DeclarationExp
+    Expressions* components;
+    Expression _init;
+
+    /// rhs = RHS seq/tuple expression
+    extern (D) this(Loc loc, Expressions* components, Expression _init) @safe
+    {
+        super(loc, EXP.unpack);
+        this.components = components;
+        this._init = _init;
+    }
+
+    override UnpackExp syntaxCopy()
+    {
+        return new UnpackExp(loc, arraySyntaxCopy(components), _init.syntaxCopy());
     }
 
     override void accept(Visitor v)
@@ -5418,4 +5449,5 @@ private immutable ubyte[EXP.max+1] expSize = [
     EXP._Generic: __traits(classInstanceSize, GenericExp),
     EXP.interval: __traits(classInstanceSize, IntervalExp),
     EXP.loweredAssignExp : __traits(classInstanceSize, LoweredAssignExp),
+    EXP.unpack : __traits(classInstanceSize, UnpackExp),
 ];
