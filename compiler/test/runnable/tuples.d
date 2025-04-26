@@ -35,6 +35,16 @@ void main()
     assert(d == 7u);
     assert(e == 8);
 
+    // unpack to existing lvalues
+    (a, b) = ("two", 3);
+    assert(a == "two");
+    assert(b == 3);
+    // nesting
+    ((a, b), c) = (("five", 6), false);
+    assert(a == "five");
+    assert(b == 6);
+    assert(!c);
+
     // tuple type
     (int, char) t = (6, '7');
     assert(t == (6, '7'));
@@ -44,15 +54,24 @@ void main()
     assert(t == (8, '9'));
     assert(t[0] == 8);
     assert(t[1] == '9');
+    // assign
+    ref f() => x;
+    (f(), b) = t; // int,int = int,char
+    assert(x == 8);
+    assert(b == '9');
 
     (int,) t2;
     static assert(t2.length == 1);
     static assert(is(typeof(t2[0]) == int));
     t2 = (5,);
     assert(t2[0] == 5);
+    // assign
+    (t[0],) = t2;
+    assert(t[0] == 5);
 
     () t3 = ();
     t3 = ();
+    () = t3; // LHS is TupleLiteralExp, but it's a no-op anyway
     static assert(t3.length == 0);
 
     // foreach unpacking
