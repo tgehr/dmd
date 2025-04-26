@@ -331,6 +331,7 @@ struct ExpressionWalker
         case EXP.notIdentity: // !is
         case EXP.string_:
         case EXP.typeid_:
+        case EXP.unpack:
         case EXP.tupleLiteral:
         case EXP.arrayLiteral:
         case EXP.assocArrayLiteral:

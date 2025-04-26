@@ -8428,9 +8428,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
 
         const olderrors = global.errors;
 
-        UnpackDeclaration u = e.declaration.isUnpackDeclaration();
-
-        if (u)
+        if (UnpackDeclaration u = e.declaration.isUnpackDeclaration())
         {
             Expression c = null;
             import dmd.dsymbolsem : include;
@@ -15339,6 +15337,86 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
         //printf("PrettyFuncInitExp::semantic()\n");
         e.type = Type.tstring;
         result = e.resolveLoc(e.loc, sc);
+    }
+
+    // lower to declarations and assignments
+    // E.g. `auto __tup = _init; auto x = __tup[0], y = __tup[1]`
+    override void visit(UnpackExp ue)
+    {
+        //printf("UnpackExp::semantic()\n");
+        import dmd.expressionsem;
+
+        auto _init = ue._init.expressionSemantic(sc);
+        _init = resolveProperties(sc, _init);
+        if (_init.type.ty == Terror)
+            return setError();
+
+        auto tup = UnpackDeclaration.getTupleExp(sc, _init);
+        if (!tup)
+        {
+            error(ue.loc, "right hand side of unpack statement must resolve to a tuple or expression sequence, not `%s`",
+                _init.type.toChars());
+            return setError();
+        }
+        if (ue.components.length != tup.exps.length)
+        {
+            error(ue.loc, "incompatible number of components for unpack statement (`%d` vs. `%d`)",
+                cast(int)ue.components.length, cast(int)tup.exps.length);
+            return setError();
+        }
+        // get elements of tup
+        auto exps = UnpackDeclaration.expandTupleExp(sc, tup, STC.none);
+        auto r = tup.e0; // __tup declaration if tup is struct
+
+        foreach (i, c; *ue.components)
+        {
+            auto exp = (*exps)[i];
+
+            if (auto de = c.isDeclarationExp())
+            {
+                auto sym = de.declaration;
+                STC stc;
+
+                if (auto vd = sym.isVarDeclaration())
+                {
+                    stc = vd.storage_class;
+                    vd._init = new ExpInitializer(exp.loc, exp);
+                }
+                else if (auto ud = sym.isUnpackDeclaration())
+                {
+                    stc = ud.storage_class;
+                    ud._init = exp;
+                }
+                else
+                {
+                    assert(0, "unexpected unpack component");
+                }
+                if (stc & STC.static_)
+                {
+                    error(sym.loc, "cannot specify `static` for unpack statement components");
+                    return setError();
+                }
+                if (stc & STC.manifest)
+                {
+                    error(sym.loc, "cannot specify `enum` for unpack statement components");
+                    return setError();
+                }
+                r = Expression.combine(r, de);
+            }
+            else if (auto inner = c.isUnpackExp())
+            {
+                inner._init = exp;
+                r = Expression.combine(r, inner);
+            }
+            else
+            {
+                auto e = new AssignExp(c.loc, c, exp);
+                r = Expression.combine(r, e);
+            }
+        }
+        r.expressionSemantic(sc);
+        r = resolveProperties(sc, r);
+        result = r;
     }
 }
 
