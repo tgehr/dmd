@@ -3012,7 +3012,7 @@ Type typeSemantic(Type type, Loc loc, Scope* sc)
 
     Type visitTupleTy(TypeTupleTy mtype)
     {
-        // rewrite (T, ...) to Tuple!(T, ...)
+        // rewrite (T, ...) to __Tuple!(T, ...)
         auto tiargs = new Objects();
         tiargs.reserve(mtype.types.length);
         foreach (i; 0 .. mtype.types.length)
@@ -3020,12 +3020,8 @@ Type typeSemantic(Type type, Loc loc, Scope* sc)
             //(*mtype.types)[i] = (*mtype.types)[i].typeSemantic(loc, sc);
             tiargs.push((*mtype.types)[i]);
         }
-        // imported!"std.typecons".Tuple!Types
-        auto moduleNameArgs = new Objects();
-        moduleNameArgs.push(new StringExp(loc, "std.typecons"));
-        auto tempinst = new TemplateInstance(loc, Id.imported, moduleNameArgs);
+        auto tempinst = new TemplateInstance(loc, Id.__Tuple, tiargs);
         TypeQualified tq = new TypeInstance(loc, tempinst);
-        tq.addInst(new TemplateInstance(loc, Id.Tuple, tiargs));
         return tq.typeSemantic(loc, sc);
     }
 
