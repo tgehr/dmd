@@ -5823,13 +5823,14 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
 
     override void visit(TupleLiteralExp e)
     {
-        // imported!"std.typecons".tuple(elements)
-        auto moduleNameArgs = new Objects();
-        moduleNameArgs.push(new StringExp(e.loc, "std.typecons"));
+        // __Tuple!(typeof(elements))(elements)
+        auto tt = new TypeTypeof(e.loc,
+            new TupleExp(e.loc, e.elements));
+        auto args = new Objects(1);
+        (*args)[0] = tt;
         auto se = new ScopeExp(e.loc,
-            new TemplateInstance(e.loc, Id.imported, moduleNameArgs));
-        auto di = new DotIdExp(e.loc, se, Id.tuple);
-        result = new CallExp(e.loc, di, e.elements);
+            new TemplateInstance(e.loc, Id.__Tuple, args));
+        result = new CallExp(e.loc, se, e.elements);
         result = result.expressionSemantic(sc);
     }
 

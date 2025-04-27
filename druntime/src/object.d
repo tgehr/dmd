@@ -4901,3 +4901,5 @@ template imported(string moduleName)
 {
     mixin("import imported = " ~ moduleName ~ ";");
 }
+
+alias __Tuple(TS...) = imported!"std.typecons".Tuple!TS;
