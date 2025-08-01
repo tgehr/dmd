@@ -1520,9 +1520,11 @@ public:
             while (ex.op == EXP.comma)
             {
                 ex.type = e.type;
+                ex.rvalue = e.rvalue;
                 ex = ex.isCommaExp().e2;
             }
             ex.type = e.type;
+            ex.rvalue = e.rvalue;
         }
     }
 
