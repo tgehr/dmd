@@ -483,7 +483,7 @@ extern (C++) abstract class Expression : ASTNode
         inout(ObjcClassReferenceExp) isObjcClassReferenceExp() { return op == EXP.objcClassReference ? cast(typeof(return))this : null; }
         inout(ClassReferenceExp) isClassReferenceExp() { return op == EXP.classReference ? cast(typeof(return))this : null; }
         inout(ThrownExceptionExp) isThrownExceptionExp() { return op == EXP.thrownException ? cast(typeof(return))this : null; }
-        inout(UnpackExp) isUnpackExp() { return op == EXP.unpack ? cast(typeof(return))this : null; }
+        inout(UnpackExp)         isUnpackExp() { return op == EXP.unpack ? cast(typeof(return))this : null; }
 
         inout(UnaExp) isUnaExp() pure inout nothrow @nogc
         {

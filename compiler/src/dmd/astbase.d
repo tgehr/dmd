@@ -4761,6 +4761,7 @@ struct ASTBase
             inout(PrettyFuncInitExp) isPrettyFuncInitExp() { return op == EXP.prettyFunction ? cast(typeof(return))this : null; }
             inout(AssignExp)         isConstructExp() { return op == EXP.construct ? cast(typeof(return))this : null; }
             inout(AssignExp)         isBlitExp()      { return op == EXP.blit ? cast(typeof(return))this : null; }
+            inout(UnpackExp)         isUnpackExp() { return op == EXP.unpack ? cast(typeof(return))this : null; }
 
             inout(UnaExp) isUnaExp() pure inout nothrow @nogc
             {
@@ -4792,6 +4793,43 @@ struct ASTBase
         {
             super(loc, EXP.declaration, __traits(classInstanceSize, DeclarationExp));
             this.declaration = declaration;
+        }
+
+        override void accept(Visitor v)
+        {
+            v.visit(this);
+        }
+    }
+
+    extern (C++) final class UnpackExp : Expression
+    {
+        Expressions* components;
+        Expression _init;
+
+        extern (D) this(Loc loc, Expressions* components, Expression _init)
+        {
+            super(loc, EXP.unpack, __traits(classInstanceSize, UnpackExp));
+            this.components = components;
+            this._init = _init;
+        }
+
+        override UnpackExp syntaxCopy()
+        {
+            static Expressions* arraySyntaxCopy(Expressions* exps)
+            {
+                Expressions* a = null;
+                if (exps)
+                {
+                    a = new Expressions(exps.length);
+                    foreach (i, e; *exps)
+                    {
+                        (*a)[i] = e ? e.syntaxCopy() : null;
+                    }
+                }
+                return a;
+            }
+
+            return new UnpackExp(loc, arraySyntaxCopy(components), _init.syntaxCopy());
         }
 
         override void accept(Visitor v)
