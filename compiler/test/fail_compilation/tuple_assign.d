@@ -6,7 +6,7 @@ fail_compilation/tuple_assign.d(26): Error: cannot implicitly convert expression
 fail_compilation/tuple_assign.d(26): Error: cannot resolve type for b = t.__expand_field_0 , c = t.__expand_field_1
 fail_compilation/tuple_assign.d(28): Error: right hand side of unpack statement must resolve to a tuple or expression sequence, not `int`
 fail_compilation/tuple_assign.d(30): Error: cannot modify constant `2`
-fail_compilation/tuple_assign.d(30): Error: cannot resolve type for (Tuple!int __tup39 = __tup39 = 0 , __tup39.this(1);) , 2 ...
+fail_compilation/tuple_assign.d(30): Error: cannot resolve type for (Tuple!int __tup39 = __tup39 = 0 , (1,);) , 2 = __tup39._...
 fail_compilation/tuple_assign.d(31): Error: incompatible number of components for unpack statement (`1` vs. `2`)
 fail_compilation/tuple_assign.d(33): Error: cannot implicitly convert expression `0` of type `int` to `string`
 fail_compilation/tuple_assign.d(33): Error: cannot resolve type for b = 0 , a = 0
