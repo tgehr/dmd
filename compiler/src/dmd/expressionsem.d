@@ -5832,6 +5832,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
             new TemplateInstance(e.loc, Id.__Tuple, args));
         result = new CallExp(e.loc, se, e.elements);
         result = result.expressionSemantic(sc);
+        result.isCallExp().loweredFrom = e;
     }
 
     override void visit(ArrayLiteralExp e)
@@ -12443,8 +12444,30 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
             }
             else if (exp.op == EXP.assign)
             {
-                if (Expression e = exp.isAssignExp().opOverloadAssign(sc, aliasThisStop))
+                if (Expression e = exp.opOverloadAssign(sc, aliasThisStop))
                 {
+                    // check assignment to tuple rvalue
+                    // needed until https://github.com/dlang/dmd/issues/21507 is fixed
+                    bool checkCall(Expression e)
+                    {
+                        CallExp ce = e.isCallExp();
+                        if (ce && ce.loweredFrom && ce.loweredFrom.isTupleLiteralExp())
+                        {
+                            error(exp.loc, "cannot assign to tuple literal");
+                            setError();
+                            return false;
+                        }
+                        return true;
+                    }
+                    if (!checkCall(e1x))
+                        return;
+                    // CondExp with tuple can't be lowered into a tuple assignment like
+                    // comma/mixin is so we have to check for it
+                    if (auto ce = e1x.isCondExp())
+                    {
+                        if (!checkCall(ce.e1) || !checkCall(ce.e2))
+                            return;
+                    }
                     result = e;
                     return;
                 }
