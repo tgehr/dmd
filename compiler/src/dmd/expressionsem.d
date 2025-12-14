@@ -5832,7 +5832,8 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
             new TemplateInstance(e.loc, Id.__Tuple, args));
         result = new CallExp(e.loc, se, e.elements);
         result = result.expressionSemantic(sc);
-        result.isCallExp().loweredFrom = e;
+        if (auto ce = result.isCallExp())
+            ce.loweredFrom = e;
     }
 
     override void visit(ArrayLiteralExp e)
