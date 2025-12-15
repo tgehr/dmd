@@ -15439,6 +15439,8 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
             }
         }
         r.expressionSemantic(sc);
+        if (auto ce = r.isCommaExp())
+            ce.originalExp = ue;
         r = resolveProperties(sc, r);
         result = r;
     }
