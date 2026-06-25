@@ -839,28 +839,9 @@ extern (C++) final class UnpackDeclaration : AttribDeclaration
 
     static Expressions* expandTupleExp(Scope* sc, TupleExp tup, STC storage_class)
     {
-        import dmd.expressionsem;
-
-        Expressions* exps = null;
-        if (tup.isAliasThisTuple())
-        {
-            import dmd.sideeffect: copyToTemp;
-            auto v = copyToTemp(storage_class, "__tup", tup);
-            import dmd.dsymbolsem : dsymbolSemantic;
-            v.dsymbolSemantic(sc);
-            auto ve = new VarExp(v.loc, v);
-            ve.type = tup.type;
-
-            exps = new Expressions();
-            exps.setDim(1);
-            (*exps)[0] = ve;
-            expandAliasThisTuples(exps, 0);
-        }
-        else
-        {
-            exps = tup.exps;
-            expandTuples(exps);
-        }
+        import dmd.expressionsem : expandTuples;
+        Expressions* exps = tup.exps;
+        expandTuples(exps);
         return exps;
     }
 
